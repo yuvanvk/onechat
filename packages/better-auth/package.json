@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.9"
+  }
+}
