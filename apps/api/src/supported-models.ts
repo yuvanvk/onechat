@@ -1,0 +1,1 @@
+export const SUPPORTED_MODELS = ["openai/gpt-5.2"]

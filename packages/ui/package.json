@@ -9,7 +9,9 @@
   ],
   "exports": {
     "./styles.css": "./dist/index.css",
-    "./*": "./dist/*.js"
+    "./*": "./dist/*.js",
+    "./card": "./src/card.tsx",
+    "./styles": "./src/styles.css"
   },
   "license": "MIT",
   "scripts": {
@@ -32,5 +34,9 @@
     "eslint": "^9.39.1",
     "tailwindcss": "^4.1.5",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0"
   }
 }

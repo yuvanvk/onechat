@@ -1,30 +1,82 @@
-import { type ReactNode } from "react";
+"use client";
+import { cn } from "../utils/cn";
 
-export function Card({
-  title,
+const Card = ({
   children,
-  href,
+  className,
 }: {
-  title: string;
-  children: ReactNode;
-  href: string;
-}) {
-  return (
-    <a
-      className="ui:group ui:rounded-lg ui:border ui:border-transparent ui:px-5 ui:py-4 ui:transition-colors hover:ui:border-neutral-700 hover:ui:bg-neutral-800/30"
-      href={`${href}?utm_source=create-turbo&utm_medium=with-tailwind&utm_campaign=create-turbo"`}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
-      <h2 className="ui:mb-3 ui:text-2xl ui:font-semibold">
-        {title}{" "}
-        <span className="ui:inline-block ui:transition-transform group-hover:ui:translate-x-1 motion-reduce:ui:transform-none">
-          -&gt;
-        </span>
-      </h2>
-      <p className="ui:m-0 ui:max-w-[30ch] ui:text-sm ui:opacity-50">
-        {children}
-      </p>
-    </a>
-  );
-}
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      "flex flex-col p-2 rounded-md max-w-sm w-full",
+      "bg-neutral-200 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);
+
+const CardHeader = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={cn("flex flex-col gap-1.5 w-full", className)}>{children}</div>;
+
+const CardTitle = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={cn("text-3xl font-medium font-sans w-full", className)}>
+    {children}
+  </div>
+);
+
+const CardDescription = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      "text-lg font-sans text-neutral-400 dark:text-neutral-600 w-full",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);
+
+const CardContent = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={cn("flex flex-col gap-2 w-full", className)}>{children}</div>;
+
+const CardFooter = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={cn("items-end", className)}>{children}</div>;
+
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+};

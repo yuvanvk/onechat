@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/types",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@workspace/typescript-config": "*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

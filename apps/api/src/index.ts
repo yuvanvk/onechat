@@ -1,15 +1,16 @@
-import { Hono } from 'hono'
-import auth from '@/routes/auth'
+import { Hono } from "hono";
+import auth from "@/routes/auth";
 import ai from "@/routes/ai";
 
 const app = new Hono({
-  strict: false
+  strict: false,
 });
 
-const routes = [auth, ai]
+const routes = [auth, ai];
 
-routes.forEach((route) => (
-  app.basePath("/api/v1").route("/", route)
-));
+routes.forEach((route) => app.basePath("/api/v1").route("/", route));
 
-export default app
+export default {
+  port: 8080,
+  fetch: app.fetch,
+};

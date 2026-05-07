@@ -9,9 +9,8 @@
     },
     "strict": true,
     "skipLibCheck": true,
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
+    "types": ["bun", "node"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   },

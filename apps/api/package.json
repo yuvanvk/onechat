@@ -12,6 +12,7 @@
     "@workspace/better-auth": "workspace:*"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.13",
     "wrangler": "^4.4.0"
   }
 }
