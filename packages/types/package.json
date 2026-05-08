@@ -6,6 +6,10 @@
     "@types/bun": "latest",
     "@workspace/typescript-config": "*"
   },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
   "peerDependencies": {
     "typescript": "^5"
   }

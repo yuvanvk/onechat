@@ -1,6 +1,6 @@
 {
   "extends": "@workspace/typescript-config/base.json",
-  "complierOptions": {
+  "compilerOptions": {
      "baseUrl": ".",
      "paths": {
         "@/*": ["./src/*"]
