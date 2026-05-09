@@ -1,5 +1,5 @@
-import { Auth } from "@/components/authentication/auth";
+import { Auth } from "@/components/auth";
 
 export default function AuthenticationPage() {
-    return <Auth />
+  return <Auth />;
 }

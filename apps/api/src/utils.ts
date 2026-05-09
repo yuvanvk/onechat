@@ -2,22 +2,14 @@ import axios, { AxiosError } from "axios";
 
 export async function getChatCompletion(
   model: string,
-  message: string,
   converstions?: string[],
 ) {
-  console.log("in chat completetion", message, model);
-
   try {
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         model: "baidu/cobuddy:free",
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
+        messages: converstions,
       },
       {
         headers: {
@@ -26,10 +18,9 @@ export async function getChatCompletion(
         },
       },
     );
-    
+
     const data = response.data.choices[0].message.content;
-    return data
-    
+    return data;
   } catch (error) {
     if (error instanceof AxiosError) {
       console.log(error.message);
