@@ -3,12 +3,14 @@
 import { memo, useState } from "react";
 import { Logo } from "@/components/logo";
 import { FcGoogle } from "react-icons/fc";
+import { useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
 import FaultyTerminal from "@/components/FaultyTerminal";
 import { Button } from "@workspace/ui/components/button";
-import { Eye, EyeClosed, FingerprintPattern } from "lucide-react";
+import { authClient } from "@/lib/better-auth/auth-client";
+import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
 
 const TERMINAL_PROPS = {
   scale: 1.5,
@@ -31,19 +33,50 @@ const TERMINAL_PROPS = {
 } as const;
 const MemoizedTerminal = memo(FaultyTerminal);
 
-export const Auth = () => {
+export const SignUp = () => {
+  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  async function handleLogin() {
+    if (!email || !password || !username) {
+      return;
+    }
+
+    await authClient.signUp.email({
+      email,
+      password,
+      name: username,
+      callbackURL: "http://localhost:3000/login",
+    }, {
+      onSuccess: () => {
+        authClient.sendVerificationEmail({ email });
+      }
+    });
+  }
 
   return (
     <div
       className={cn(
         "w-full md:max-w-3xl mx-auto sm:border-x min-h-screen border-dashed",
         "flex flex-col items-center justify-center",
-        "p-3 md:p-0",
+        "p-3 md:p-0 relative",
       )}
     >
+      <div 
+        onClick={() => router.push("/login")}
+        className="absolute top-5 right-5"
+      >
+        <Button 
+          size={"sm"} 
+          variant={"secondary"}
+        >
+          Login
+          <ArrowRight />
+        </Button>
+      </div>
       {/* Card */}
       <div
         className={cn(
@@ -61,13 +94,16 @@ export const Auth = () => {
 
         <div className="flex flex-col gap-5 my-8 px-6">
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               required
+              id="email"
               type="email"
               placeholder="Enter your email address"
               onChange={(e) => setEmail(e.target.value)}
-              className={cn("bg-neutral-900! border-neutral-800!")}
+              className={cn(
+                "bg-neutral-900! border-neutral-800! transition-all",
+              )}
             />
             <span className="text-[13px] text-neutral-500 pl-2">
               We'll never share your email within anyone else.
@@ -75,13 +111,31 @@ export const Auth = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>Password</Label>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              required
+              id="username"
+              type="text"
+              placeholder="Enter your username"
+              onChange={(e) => setUsername(e.target.value)}
+              className={cn(
+                "bg-neutral-900! border-neutral-800! transition-all",
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
             <div className="flex items-center gap-2">
               <Input
+                required
+                id="password"
                 placeholder="Enter your Password"
                 type={showPassword ? "text" : "password"}
                 onChange={(e) => setPassword(e.target.value)}
-                className={cn("bg-neutral-900! border-neutral-800!")}
+                className={cn(
+                  "bg-neutral-900! border-neutral-800! transition-all",
+                )}
               />
               <Button
                 size={"icon"}
@@ -94,12 +148,13 @@ export const Auth = () => {
           </div>
 
           <Button
+            onClick={handleLogin}
             className={cn(
               "bg-neutral-900 text-neutral-100 border-neutral-800 mt-2",
             )}
           >
             <FingerprintPattern />
-            Login
+            SignUp
           </Button>
 
           <div className="flex items-center gap-2 w-full">
