@@ -5,7 +5,7 @@ const router = new Hono({
     strict: false
 });
 
-router.on(["POST", "GET"], '/auth/*', (c) => {
+router.on(["POST", "GET", "OPTIONS"], '/*', (c) => {
     return auth.handler(c.req.raw)
 });
 

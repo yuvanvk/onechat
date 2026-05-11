@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
-import { randomUUIDv7 } from "bun";
 import { redis } from "@/services/redis";
+import { streamSSE } from "hono/streaming";
 import { getChatCompletion } from "@/utils";
 import { conversation, db, message as messageTable } from "@workspace/db";
-import { streamSSE } from "hono/streaming";
 
 const router = new Hono();
 
@@ -78,7 +77,7 @@ router.post("/chat", async (c) => {
 
     let { message, model, conversationId } = body;
 
-    conversationId = conversationId ?? randomUUIDv7();
+    conversationId = conversationId ?? crypto.randomUUID();
 
     // Getting the existing messages of conversation if it exists, otherwise create one.
     let messages: { role: string; content: string }[] = [];
@@ -112,7 +111,7 @@ router.post("/chat", async (c) => {
 
     // push current message into DB.
     await db.insert(messageTable).values({
-      id: randomUUIDv7(),
+      id: crypto.randomUUID(),
       content: message,
       role: "user",
       conversationId,
@@ -136,7 +135,7 @@ router.post("/chat", async (c) => {
         }
 
         await db.insert(messageTable).values({
-          id: randomUUIDv7(),
+          id: crypto.randomUUID(),
           content: fullContent,
           role: "assistant",
           conversationId,
