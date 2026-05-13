@@ -4,7 +4,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MailOpen } from "lucide-react";
+import { MailOpen, ShieldBan } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 
 export const VerifyEmail = () => {
@@ -12,7 +12,7 @@ export const VerifyEmail = () => {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState(true);
+  const [data, setData] = useState(false);
 
   useEffect(() => {
     const verify = async () => {
@@ -23,7 +23,9 @@ export const VerifyEmail = () => {
         if (error) {
           setError(error.message!);
         } else {
-          setData(true);
+          if (data) {
+            setData(true);
+          }
         }
       }
     };
@@ -38,7 +40,14 @@ export const VerifyEmail = () => {
       )}
     >
       <div>
-        {error && <div>{error}</div>}
+        {error && (
+          <div className="flex items-center gap-2">
+            <ShieldBan size={20} className="text-neutral-300" />
+            <span className="text-xl font-medium text-neutral-300">
+              {error}.
+            </span>
+          </div>
+        )}
         {data && (
           <div className="flex items-center gap-2 relative">
             <MailOpen size={20} className="text-neutral-200" />
