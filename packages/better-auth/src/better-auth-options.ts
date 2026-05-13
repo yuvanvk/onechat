@@ -11,11 +11,13 @@ export const betterAuthOptions: BetterAuthOptions = {
   },
   emailVerification: {
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url, token }, request) => {
+    sendVerificationEmail: async ({ user, token }, request) => {
+      const verifyUrl = `http://localhost:3000/verify-email?token=${encodeURIComponent(token)}`
+      
       void sendEmail({
         to: user.email,
         subject: "Verify your email address",
-        text: `Click the link to verify your email: ${url}`,
+        text: `Click the link to verify your email: ${verifyUrl}`,
       });
     },
   },
