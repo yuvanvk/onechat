@@ -1,16 +1,20 @@
-"use client";
+"use client"
 
+import dynamic from "next/dynamic";
 import { memo, useState } from "react";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/components/ui/logo";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
-import FaultyTerminal from "@/components/FaultyTerminal";
 import { Button } from "@workspace/ui/components/button";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
+
+const FaultyTerminal = dynamic(() => import("@/components/ui/FaultyTerminal"), {
+  ssr: false
+})
 
 const TERMINAL_PROPS = {
   scale: 1.5,
