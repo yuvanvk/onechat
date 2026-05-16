@@ -1,20 +1,20 @@
-import { getDB } from "@workspace/db";
+import { D1Database, getDB } from "@workspace/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuthOptions } from "./better-auth-options";
 
-interface CloudflareBindings {
-  DATABASE_URL: string;
+interface Bindings {
+  D1DATABASE: D1Database;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;
 }
 
-export const auth = (env: any) => {
-  const db = getDB(env.DATABASE_URL)
+export const auth = (env: Bindings) => {
+  const db = getDB(env.D1DATABASE)
   
   return betterAuth({
     ...betterAuthOptions,
-    database: drizzleAdapter(db, { provider: "pg" }),
+    database: drizzleAdapter(db, { provider: "sqlite" }),
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     socialProviders: {
