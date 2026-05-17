@@ -17,8 +17,8 @@ router.get("/conversations", async (c) => {
   const db = c.get("db");
 
   const conversations = await db.query.conversation.findMany({
-    where: eq(conversation.userId, userId),
-  });
+    where: eq(conversation.userId, userId!) 
+  })
   if (conversations.length === 0) {
     c.status(404);
     return c.json({ message: "No conversations found" });
@@ -118,10 +118,9 @@ router.post("/chat", async (c) => {
     // push current message into DB.
     await db.insert(messageTable).values({
       id: crypto.randomUUID(),
-      content: message,
       role: "user",
+      content: message,
       conversationId,
-      createdAt: new Date(),
     });
 
     // push current user message into messages array for redis purpose.
@@ -174,7 +173,6 @@ router.post("/chat", async (c) => {
           content: fullContent,
           role: "assistant",
           conversationId,
-          createdAt: new Date(),
         });
 
         messages = [
