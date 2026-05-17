@@ -1,20 +1,23 @@
 import { Hono } from "hono";
-import auth from "@/routes/auth";
 import ai from "@/routes/ai";
+import auth from "@/routes/auth";
 import { cors } from "hono/cors";
-import { Bindings } from "./types";
+import { authMiddleware, dbMiddleware } from "@/middleware";
+import { Bindings, Variables } from "@/types";
 
-const app = new Hono<{ Bindings: Bindings }>({
+
+const app = new Hono<{ Bindings: Bindings, Variables: Variables }>({
   strict: false,
 });
 
 app.use("*", cors({
-  // Must match the browser Origin header exactly (no trailing slash).
   origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
+
+app.use("*", dbMiddleware);
 
 const routes = [
   { path: "/auth", router: auth },
@@ -22,6 +25,8 @@ const routes = [
 ];
 
 const api = app.basePath("/api/v1");
+api.use("/ai/*", authMiddleware);
+
 routes.forEach(({ path, router }) => api.route(path, router));
 
 export default {

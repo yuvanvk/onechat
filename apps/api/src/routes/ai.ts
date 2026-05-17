@@ -2,17 +2,19 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
-import { Message, Role } from "@workspace/types";
 import { streamSSE } from "hono/streaming";
 import { getChatCompletion } from "@/utils";
-import { conversation, db, message as messageTable } from "@workspace/db/";
+import { Bindings, Variables } from "@/types";
+import { Message, Role } from "@workspace/types";
+import { conversation, message as messageTable } from "@workspace/db";
 
-
-const router = new Hono();
+const router = new Hono<{ Bindings: Bindings, Variables: Variables }>({ strict: false });
 
 router.get("/conversations", async (c) => {
   // first check if the user is authenticated and then using user session userId get all the conversations
-  const userId = "7qkvH2QYZFgOlq533WXw8iz0p5H5Kjq1";
+  const userId = c.var.session?.session.userId;
+
+  const db = c.get("db");
 
   const conversations = await db.query.conversation.findMany({
     where: eq(conversation.userId, userId),
@@ -26,7 +28,8 @@ router.get("/conversations", async (c) => {
 });
 
 router.get("/conversations/:conversationId", async (c) => {
-  const userId = "temp";
+
+  const db = c.get("db");
 
   const { conversationId } = c.req.param();
   if (!conversationId) {
@@ -69,6 +72,7 @@ router.get("/conversations/:conversationId", async (c) => {
 
 router.post("/chat", async (c) => {
   try {
+    const db = c.get("db");
     const body = await c.req.json();
     const { success } = ChatSchema.safeParse(body);
 

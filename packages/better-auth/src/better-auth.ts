@@ -4,19 +4,17 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuthOptions } from "./better-auth-options";
 
 interface Bindings {
-  D1DATABASE: D1Database;
-  BETTER_AUTH_SECRET: string;
-  BETTER_AUTH_URL: string;
+  D1_DATABASE: D1Database;
 }
 
 export const auth = (env: Bindings) => {
-  const db = getDB(env.D1DATABASE)
+  const db = getDB(env.D1_DATABASE)
   
   return betterAuth({
     ...betterAuthOptions,
     database: drizzleAdapter(db, { provider: "sqlite" }),
-    baseURL: env.BETTER_AUTH_URL,
-    secret: env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL,
+    secret: process.env.BETTER_AUTH_SECRET,
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID as string,
