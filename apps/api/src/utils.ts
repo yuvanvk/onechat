@@ -12,12 +12,12 @@ export async function getChatCompletion(
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
         body: JSON.stringify({
-          model,
+          model: "baidu/cobuddy:free",
           messages: converstions,
           stream: true
         })
       })
-      
+        
       return response.body?.getReader();
   } catch (error) {
     console.log("./utils/getChatCompletion -> ",error);

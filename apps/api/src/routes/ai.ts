@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
 import { streamSSE } from "hono/streaming";
-import { getChatCompletion } from "@/utils";
 import { Bindings, Variables } from "@/types";
 import { Message, Role } from "@workspace/types";
 import { conversation, message as messageTable } from "@workspace/db";
@@ -82,10 +81,9 @@ router.post("/chat", async (c) => {
     }
 
     let { message, model, conversationId } = body;
-
+    
     conversationId = conversationId ?? crypto.randomUUID();
 
-    // Getting the existing messages of conversation if it exists, otherwise create one.
     let messages: Message[] = [];
 
     const cached = (await redis.get(`conv:${conversationId}`)) as string;
@@ -99,7 +97,7 @@ router.post("/chat", async (c) => {
       if (!existingConv) {
         await db.insert(conversation).values({
           id: conversationId,
-          userId: "7qkvH2QYZFgOlq533WXw8iz0p5H5Kjq1",
+          userId: "XleD6V8trKFuHmye7Ant421ojUPS2Ap9",
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -116,8 +114,9 @@ router.post("/chat", async (c) => {
     }
 
     // push current message into DB.
+    const userMessageId = crypto.randomUUID()
     await db.insert(messageTable).values({
-      id: crypto.randomUUID(),
+      id: userMessageId,
       role: "user",
       content: message,
       conversationId,
@@ -127,36 +126,32 @@ router.post("/chat", async (c) => {
     messages = [...messages, { role: "user" as Role, content: message }];
     return streamSSE(c, async (stream) => {
       let fullContent = "";
+      const assistantMessageId = crypto.randomUUID();
 
       try {
-        const reader = await getChatCompletion(model, messages);
+        const answer = await c.env.AI.run(model, {
+          messages,
+          stream: true
+        }) as unknown as ReadableStream
+
+        const reader = answer.getReader();
 
         const decoder = new TextDecoder();
 
         while (true) {
-          const { done, value } = await reader!.read();
+          const { done, value } = await reader.read();
           if (done) break;
-          console.log("value -> ",value);
-          
           const chunk = decoder.decode(value, { stream: true });
-          console.log("chunk -> ",chunk);
           
           for (const line of chunk.split("\n")) {
-            console.log("line -> ", line);
-            
             const trimmed = line.trim();
-            console.log("trimmed -> ", trimmed);
-            
             if (!trimmed.startsWith("data: ") || trimmed === "data: [DONE]")
               continue;
 
             try {
               const parsed = JSON.parse(trimmed.slice(6));
-              console.log("parsed -> ", parsed);
-              
               const token = parsed.choices?.[0]?.delta?.content;
-              console.log("token -> ", token);
-              
+              console.log(token);
               if (token) {
                 fullContent += token;
                 await stream.writeSSE({
@@ -169,7 +164,7 @@ router.post("/chat", async (c) => {
         }
 
         await db.insert(messageTable).values({
-          id: crypto.randomUUID(),
+          id: assistantMessageId,
           content: fullContent,
           role: "assistant",
           conversationId,
@@ -183,10 +178,12 @@ router.post("/chat", async (c) => {
         await redis.set(`conv:${conversationId}`, JSON.stringify(messages), {
           ex: 7200,
         });
+
         await stream.writeSSE({
-          data: JSON.stringify({ conversationId }),
+          data: JSON.stringify({ conversationId, assistantMessageId, userMessageId }),
           event: "done",
         });
+
       } catch (error) {
         console.error("[/chat stream]", error);
         await stream.writeSSE({
@@ -196,7 +193,6 @@ router.post("/chat", async (c) => {
       }
     });
   } catch (error) {
-    console.log(error);
     c.status(500);
     return c.json({ message: "Internal Server Error" });
   }

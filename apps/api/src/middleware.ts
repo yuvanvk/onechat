@@ -7,7 +7,8 @@ export const authMiddleware = createMiddleware<{ Bindings: Bindings, Variables: 
     const betterAuth= auth(c.env);
 
     const session = await betterAuth.api.getSession({ headers: c.req.raw.headers });
-
+    console.log(session);
+    
     if(!session) {
         return c.json({ message: "UNAUTHORIZED" }, 401)
     }
