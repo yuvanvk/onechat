@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: "OneChat",
   description: "All in one AI chat app.",
   icons: {
-    icon: "./logo.svg",
+    icon: "/logo.svg",
   },
 };
 
