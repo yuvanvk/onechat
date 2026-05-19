@@ -10,7 +10,6 @@ import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
 
-
 export const ChatInput = () => {
 
   const { addMessage, updateMessage } = useMessages();
@@ -49,40 +48,57 @@ export const ChatInput = () => {
         throw new Error("Something went wrong")
       }
       
+
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break
-        }
-        
-        const chunk = decoder.decode(value, { stream: true })
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        for (const line of chunk.split("\n")) {
-          const trimmed = line.trim()
-          if(!trimmed.startsWith("done:")) continue;
+          buffer += decoder.decode(value, { stream: true });
 
-          const data = JSON.parse(trimmed.slice(5).trim())
+          const events = buffer.split("\n\n");
+          buffer = events.pop() ?? "";
 
-          if(data.token) {
-            updateMessage({ token: data.token })
-          }
-          if (data.userMessageId) {
-            updateMessage({ id: "new-user-message", setId: data.userMessage })
-          } 
-          if (data.assistantMessageId) {
-            updateMessage({ id: "new-ai-message", setId: data.assistantMessageId })
-          }
-        }
-      }
+          for (const eventBlock of events) {
+            const lines = eventBlock.split("\n").filter(Boolean);
       
+            let eventName = "token";
+            let dataLine  = "";
+      
+            for (const line of lines) {
+              if (line.startsWith("event: ")) eventName = line.slice(7);         // strip "event: "
+              if (line.startsWith("data: "))  dataLine  = line.slice(6);         // strip "data: " (Rule 2)
+            }
+      
+            if (!dataLine) continue;
+      
+            const payload = JSON.parse(dataLine);
+            console.log(payload.token);
+            console.log("eventName -> ", eventName);
+            
+            if (eventName === "token") {
+              updateMessage({token: payload.token})
+            } else if (eventName === "done") {
+              reader.releaseLock();
+              return;
+            }
+          }
 
+
+        }
+      } catch (error) {
+        
+      }
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message)
       }
+    } finally {
+      setLoading(false)
     }
   }
 
