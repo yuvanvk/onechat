@@ -2,9 +2,9 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
+import { Message } from "@workspace/types";
 import { streamSSE } from "hono/streaming";
 import { Bindings, Variables } from "@/types";
-import { Message, Role } from "@workspace/types";
 import { conversation, message as messageTable } from "@workspace/db";
 
 const router = new Hono<{ Bindings: Bindings; Variables: Variables }>({
@@ -91,7 +91,7 @@ router.post("/chat", async (c) => {
 
     messages = [...messages, { role: "user", content: message } as Message];
 
-    const stream = (await c.env.AI.run("@cf/moonshotai/kimi-k2.6", {    // ← dynamic model
+    const stream = (await c.env.AI.run(model, {
       messages,
       stream: true,
     })) as unknown as ReadableStream;
@@ -127,18 +127,18 @@ router.post("/chat", async (c) => {
 
             const json = JSON.parse(dataLine.slice(6));
 
-            // ✅ handles both llama and openai-compatible models
             const token =
               json.response ??
               json.choices?.[0]?.delta?.content ??
               "";
 
-            if (token) fullContent += token;
-
-            await stream.writeSSE({
-              event: "token",
-              data: JSON.stringify({ token }),
-            });
+            if (token) {
+              fullContent += token;
+              await stream.writeSSE({
+                event: "token",
+                data: JSON.stringify({ token }),
+              });
+            }
           }
 
           if (isDone) {
