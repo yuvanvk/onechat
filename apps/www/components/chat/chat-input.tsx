@@ -105,7 +105,7 @@ export const ChatInput = () => {
   return (
     <motion.div
       className={cn(
-        "flex flex-col rounded-xl border border-[#171616] dark:bg-[#121212] max-w-3xl w-full mx-auto fixed bottom-1 left-1/2 -translate-x-1/2",
+        "flex flex-col rounded-xl border border-[#171616] dark:bg-[#121212] max-w-3xl w-full mx-auto fixed bottom-3 left-1/2 -translate-x-1/2",
       )}
     >
       <div className="bg-black border border-neutral-900 p-4 rounded-xl">
