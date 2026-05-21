@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Paperclip, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { Role } from "@workspace/types";
 import { cn } from "@workspace/ui/lib/utils";
@@ -9,6 +9,7 @@ import { useMessages } from "@/store/useMessage";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
+import { SelectModelPopover } from "./select-model-popover";
 
 export const ChatInput = () => {
 
@@ -44,10 +45,10 @@ export const ChatInput = () => {
         }),
       });
 
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error("Something went wrong")
       }
-      
+
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
@@ -65,23 +66,23 @@ export const ChatInput = () => {
 
           for (const eventBlock of events) {
             const lines = eventBlock.split("\n").filter(Boolean);
-      
+
             let eventName = "token";
-            let dataLine  = "";
-      
+            let dataLine = "";
+
             for (const line of lines) {
-              if (line.startsWith("event: ")) eventName = line.slice(7);         // strip "event: "
-              if (line.startsWith("data: "))  dataLine  = line.slice(6);         // strip "data: " (Rule 2)
+              if (line.startsWith("event: ")) eventName = line.slice(7);
+              if (line.startsWith("data: ")) dataLine = line.slice(6);
             }
-      
+
             if (!dataLine) continue;
-      
+
             const payload = JSON.parse(dataLine);
             console.log(payload.token);
             console.log("eventName -> ", eventName);
-            
+
             if (eventName === "token") {
-              updateMessage({token: payload.token})
+              updateMessage({ token: payload.token })
             } else if (eventName === "done") {
               reader.releaseLock();
               return;
@@ -91,7 +92,7 @@ export const ChatInput = () => {
 
         }
       } catch (error) {
-        
+
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -121,9 +122,15 @@ export const ChatInput = () => {
       </div>
 
       <div className={cn("flex items-center justify-between p-1.5")}>
-        <Button size={"icon-lg"} variant={"ghost"}>
-          <Plus className="text-neutral-400" />
-        </Button>
+        <div className={cn("flex items-center w-full")}>
+          <SelectModelPopover />
+          <Button size={"sm"} variant={"ghost"} className="text-neutral-400">
+            <Paperclip />
+            Attach 
+          </Button>
+
+          {/* Select Models */}
+        </div>
 
         <Button
           size={"icon"}
