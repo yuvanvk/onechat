@@ -101,7 +101,7 @@ export const SideBarItem = ({
       initial="rest"
       whileHover="hover"
       animate="rest"
-      className={cn("flex items-center gap-2")}
+      className={cn("flex items-center gap-2 cursor-pointer")}
     >
       <motion.div className={cn("flex flex-col gap-[7px]")}>
         {[0, 1, 2].map((_, idx) => (
@@ -116,7 +116,7 @@ export const SideBarItem = ({
       <Button
         variant={"ghost"}
         className={cn(
-          "p-0 text-[15px] font-normal text-neutral-500 bg-transparent",
+          "p-0 text-[15px] font-normal text-neutral-500 bg-transparent hover:bg-transparent!",
           className,
         )}
         {...props}
