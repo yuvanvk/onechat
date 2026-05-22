@@ -37,9 +37,7 @@ export function processFiles(
             type:       file.type,
             size:       file.size,
             base64,
-            previewUrl: file.type.startsWith('image/')
-                          ? URL.createObjectURL(file)
-                          : null,
+            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
           })
     }
   }

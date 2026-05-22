@@ -6,12 +6,12 @@ import { Role } from "@workspace/types";
 import { Paperclip, X } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useMessages } from "@/store/useMessage";
+import { AttachmentChip } from "./attachment-chip";
 import { ChangeEvent, useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
-import { AttachmentChip } from "./attachment-chip";
 
 export const ChatInput = () => {
   const { addMessage, updateMessage } = useMessages();
@@ -33,7 +33,6 @@ export const ChatInput = () => {
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
 
-    // Need to process the files
     processFiles(
       Array.from(e.target.files),
       (a) => setAttachments((p) => [...p, a]),
@@ -181,7 +180,7 @@ export const ChatInput = () => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-3xl border border-[#171616] dark:bg-[#121212] max-w-3xl w-full mx-auto fixed bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-3.5 gap-2",
+        "flex flex-col rounded-3xl border border-[#191919] dark:bg-[#121212] max-w-3xl w-full mx-auto fixed bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-3.5 gap-2",
         isDraggingOver && "drag-active",
       )}
     >
