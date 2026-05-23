@@ -8,29 +8,29 @@ export function Topbar() {
   return (
     <div
       className={cn(
-        "fixed top-4 right-4 bg-linear-to-b bg-[#161616] border border-[#1d1d1d] p-1 rounded-xl",
-        "flex items-center gap-1",
+        "fixed top-4 right-4 bg-linear-to-b from-[#1A1A1A] to-[#161616] border border-neutral-800 p-1 rounded-2xl",
+        "flex items-center gap-0.5",
       )}
     >
       <Button
-        size={"icon"}
-        className={cn("bg-neutral-800 text-neutral-200 rounded-full")}
+        size={"icon-lg"}
+        className={cn("bg-[#232323] text-neutral-200 rounded-full")}
       >
-        <Command />
+        <Ghost />
       </Button>
 
       <Button
-        size={"icon"}
-        className={cn("bg-neutral-800 text-neutral-200 rounded-full")}
+        size={"icon-lg"}
+        className={cn("bg-[#232323] text-neutral-200 rounded-full")}
       >
         <Cog />
       </Button>
-
+      
       <Button
-        size={"icon"}
-        className={cn("bg-neutral-800 text-neutral-200 rounded-full")}
+        size={"icon-lg"}
+        className={cn("bg-[#232323] text-neutral-200 rounded-full")}
       >
-        <Ghost />
+        <Command />
       </Button>
     </div>
   );

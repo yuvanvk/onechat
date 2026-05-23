@@ -10,7 +10,7 @@ export const Chat = () => {
   const { messages, setMessages } = useMessages();
   
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col min-h-screen w-full bg-[#080808]">
       <Topbar />
       <ScrollArea className="min-h-[800px] max-w-3xl mx-auto w-full px-4 py-5 flex flex-col">
         {messages.map((message, idx) => (
