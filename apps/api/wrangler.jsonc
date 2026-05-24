@@ -17,7 +17,31 @@
 	"ai": {
 		"binding": "AI",
 		"remote": true
-	}
+	},
+	"r2_buckets": [
+		{
+			"binding": "IMAGES_BUCKET",
+			"bucket_name": "onechat-images-bucket"
+		},
+		{
+			"binding": "PDFS_BUCKET",
+			"bucket_name": "onechat-pdfs-bucket"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "CONVERSATION",
+				"class_name": "Conversation"
+			}
+		]
+	},
+	"migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Conversation"]
+    }
+  ]
 	// "vars": {
 	//   "MY_VAR": "my-variable"
 	// },

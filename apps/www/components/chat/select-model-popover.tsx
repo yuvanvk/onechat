@@ -18,15 +18,15 @@ export const SelectModelPopover = () => {
   const hasSearch = search.length > 0;
 
   const modelsToDisplayBasedOnProvider = SELECT_MODELS
-                                        .filter((x) => x.id == provider)
-                                        .flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
+    .filter((x) => x.id == provider)
+    .flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
 
   const modelsBasedOnSearch = SELECT_MODELS
-                              .flatMap((provider) => (provider.models ?? [])
-                              .filter((m) => 
-                                m.id.toLowerCase().includes(search.toLowerCase()) 
-                              || m.displayName.toLowerCase().includes(search.toLowerCase()) 
-                              || m.description.toLowerCase().includes(search.toLowerCase()),
+    .flatMap((provider) => (provider.models ?? [])
+    .filter((m) => 
+      m.id.toLowerCase().includes(search.toLowerCase()) 
+      || m.displayName.toLowerCase().includes(search.toLowerCase()) 
+      || m.description.toLowerCase().includes(search.toLowerCase()),
     ),
   );
 
@@ -111,10 +111,10 @@ export const SelectModelPopover = () => {
                     "flex flex-col gap-5 items-center py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >
-                  {SELECT_MODELS.map((model) => {
+                  {SELECT_MODELS.map((model, idx) => {
                     const Icon = model.icon;
                     return (
-                      <div className="relative">
+                      <div key={idx} className="relative">
                         {provider === model.id && (
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -145,6 +145,7 @@ export const SelectModelPopover = () => {
                   "flex flex-col gap-5 py-5 px-4 overflow-y-scroll scrollbar-hidden",
                 )}
               >
+                {displayModels.length === 0 && <span className="text-sm text-neutral-500 text-center">No results found.</span>} 
                 {displayModels.length > 0 &&
                   displayModels.map((model) => {
                     return (
@@ -184,18 +185,18 @@ export const SelectModelPopover = () => {
                             </Button>
                           </div>
 
-                          <div className="flex items-center gap-1.5 bg-neutral-800 px-1 py-1 rounded-lg text-neutral-400">
-                            {model?.capabilities.map((cap) => {
+                          <div className="flex items-center gap-2 bg-neutral-800 px-1 py-1 rounded-lg text-neutral-400">
+                            {model?.capabilities.map((cap, idx) => {
                               const size = 12;
                               switch (cap) {
                                 case "code":
-                                  return <Code2 size={size} />;
+                                  return <Code2 size={size} key={idx}/>;
                                 case "image-gen":
-                                  return <Image size={size} />;
+                                  return <Image size={size} key={idx}/>;
                                 case "reasoning":
-                                  return <Brain size={size} />;
+                                  return <Brain size={size} key={idx}/>;
                                 case "vision":
-                                  return <Eye size={size} />;
+                                  return <Eye size={size} key={idx}/>;
                               }
                             })}
                           </div>

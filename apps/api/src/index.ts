@@ -5,7 +5,6 @@ import { cors } from "hono/cors";
 import { authMiddleware, dbMiddleware } from "@/middleware";
 import { Bindings, Variables } from "@/types";
 
-
 const app = new Hono<{ Bindings: Bindings, Variables: Variables }>({
   strict: false,
 });
@@ -29,6 +28,7 @@ const api = app.basePath("/api/v1");
 
 routes.forEach(({ path, router }) => api.route(path, router));
 
+export { Conversation } from "./durable-object/Conversation";
 export default {
   port: 8080,
   fetch: app.fetch,

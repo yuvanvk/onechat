@@ -1,4 +1,11 @@
-import { Deepseek, Favourite, Google, Meta, Moonshot, OpenAI } from "@/components/icons";
+import {
+  Deepseek,
+  Favourite,
+  Google,
+  Meta,
+  Moonshot,
+  OpenAI,
+} from "@/components/icons";
 import { JSX } from "react";
 
 export type Capability = "vision" | "reasoning" | "image-gen" | "code";
@@ -15,17 +22,13 @@ export interface ModelProvider {
   id: string;
   icon: React.ComponentType<{ className?: string }>;
   models?: AIModel[];
-  favourites?: string[];
+  favourites?: AIModel[];
 }
 export const SELECT_MODELS: ModelProvider[] = [
   {
     id: "favourites",
     icon: Favourite,
-    favourites: [
-      "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      "@cf/google/gemma-3-12b-it",
-      "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
-    ],
+    favourites: [],
   },
   {
     id: "openai",

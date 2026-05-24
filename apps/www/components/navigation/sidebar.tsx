@@ -88,12 +88,15 @@ export const SideBarItem = ({
 }: ComponentProps<typeof Button>) => {
   const barVariants = {
     rest: { width: "32px", backgroundColor: "var(--color-neutral-600)" },
-    hover: { width: "32px", backgroundColor: "var(--color-neutral-600)" },
+    hover: {
+      width: "32px",
+      backgroundColor: "var(--color-neutral-600)",
+    },
   };
 
   const middleBarVariants = {
     rest: { width: "32px", backgroundColor: "#525252" },
-    hover: { width: "45px", backgroundColor: "#e5e5e5" },
+    hover: { width: "45px", backgroundColor: "#00A6F4" },
   };
 
   return (
@@ -116,12 +119,20 @@ export const SideBarItem = ({
       <Button
         variant={"ghost"}
         className={cn(
-          "p-0 text-[15px] font-normal text-neutral-500 bg-transparent hover:bg-transparent!",
+          "p-0 text-[15px] font-normal bg-transparent hover:bg-transparent!",
           className,
         )}
         {...props}
       >
-        {children}
+        <motion.span
+          variants={{
+            rest: { color: "var(--color-neutral-500)" },
+            hover: { color: "#00A6F4" },
+          }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          {children}
+        </motion.span>
       </Button>
     </motion.div>
   );

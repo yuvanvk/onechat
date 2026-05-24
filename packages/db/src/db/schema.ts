@@ -51,7 +51,22 @@ export const message = sqliteTable("message", {
 	id: t.text("id").primaryKey(),
 	role: t.text("role", { enum: ["assistant", "user"]}).notNull(),
 	content: t.text("content"),
-	conversationId: t.text("conversation_id").notNull().references(() => conversation.id, { onDelete: "cascade" })
+	conversationId: t.text("conversation_id").notNull().references(() => conversation.id, { onDelete: "cascade" }),
+	createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull()
+}, (table) => [t.index("message_conversation_idx").on(table.conversationId)]);
+
+export const image = sqliteTable("image", {
+	id: t.text("id").primaryKey(),
+	imageUrl: t.text("image_url").notNull(),
+	messageId: t.text("message_id").notNull().references(() => message.id, { onDelete: "cascade" }),
+	createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull()
+})
+
+export const pdf = sqliteTable("pdf", {
+	id: t.text("id").primaryKey(),
+	publicUrl: t.text("public_url").notNull(),
+	messageId: t.text("message_id").notNull().references(() => message.id, { onDelete: "cascade" }),
+	createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull()
 })
 
 export const conversation = sqliteTable("conversation", {
@@ -59,5 +74,5 @@ export const conversation = sqliteTable("conversation", {
 	title: t.text("title", { length: 255 }).notNull().default("Untitled"),
 	userId: t.text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
 	createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull(),
-	updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),	
-})
+	updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+}, (table) => [t.index("conversation_user_idx").on(table.userId)]);

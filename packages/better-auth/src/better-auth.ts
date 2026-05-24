@@ -5,7 +5,6 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 
 interface Bindings {
   D1_DATABASE: D1Database;
-  OPENROUTER_API_KEY: string;
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
   GOOGLE_CLIENT_ID: string;

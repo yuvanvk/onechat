@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
-import { Message } from "@workspace/types";
+import { Message, Role } from "@workspace/types";
 import { streamSSE } from "hono/streaming";
 import { Bindings, Variables } from "@/types";
 import { conversation, message as messageTable } from "@workspace/db";
@@ -78,23 +78,10 @@ router.post("/chat", async (c) => {
     let { message, model, conversationId } = body;
     conversationId = conversationId ?? crypto.randomUUID();
 
-    let messages: Message[] = [];
-    const existingConversations = await db.query.message.findMany({
-      where: eq(conversation.id, conversationId),
-    });
+    const id = c.env.CONVERSATION.idFromName(conversationId)
+    const stub = c.env.CONVERSATION.get(id)
 
-    if (existingConversations.length) {
-      messages = existingConversations.map(
-        (m) => ({ role: m.role, content: m.content }) as Message,
-      );
-    }
-
-    messages = [...messages, { role: "user", content: message } as Message];
-
-    const stream = (await c.env.AI.run(model, {
-      messages,
-      stream: true,
-    })) as unknown as ReadableStream;
+    const stream = await stub.streamResponse({ role: "user" as Role, content: message }, model);
 
     const reader = stream.getReader();
     const decoder = new TextDecoder();
@@ -132,7 +119,7 @@ router.post("/chat", async (c) => {
               json.choices?.[0]?.delta?.content ??
               "";
 
-            if (token) {
+            if (token) {              
               fullContent += token;
               await stream.writeSSE({
                 event: "token",
