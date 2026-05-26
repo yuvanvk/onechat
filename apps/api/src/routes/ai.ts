@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
-import { Message, Role } from "@workspace/types";
+import { Role } from "@workspace/types";
 import { streamSSE } from "hono/streaming";
 import { Bindings, Variables } from "@/types";
 import { conversation, message as messageTable } from "@workspace/db";

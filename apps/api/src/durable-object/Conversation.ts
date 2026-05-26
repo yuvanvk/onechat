@@ -1,5 +1,6 @@
 import { Message } from "@workspace/types";
 import { DurableObject } from "cloudflare:workers";
+import { object } from "zod";
 
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
@@ -20,6 +21,24 @@ export class Conversation extends DurableObject<Env> {
         .exec(`SELECT id, role, content FROM messages ORDER BY created_at ASC`)
         .toArray() as Message[];
     });
+  }
+
+  async fetch(request: Request): Promise<Response> {
+    const webSocketPair = new WebSocketPair();
+    const [client, server] = Object.values(webSocketPair);
+
+    this.ctx.acceptWebSocket(server);
+
+    return new Response(null, {
+      status: 101,
+      webSocket: client
+    })
+  }
+
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
+    ws.send(
+      `[Durable Object] message: ${message}, connections: ${this.ctx.getWebSockets().length}`,
+    );
   }
 
   async getMessages() {
