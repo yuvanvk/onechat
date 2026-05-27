@@ -2,8 +2,6 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { ChatSchema } from "@/zod";
 import { redis } from "@/services/redis";
-import { Role } from "@workspace/types";
-import { streamSSE } from "hono/streaming";
 import { Bindings, Variables } from "@/types";
 import { conversation, message as messageTable } from "@workspace/db";
 
@@ -68,79 +66,17 @@ router.get("/conversations/:conversationId", async (c) => {
   return c.json({ message: "Success", conversation: formattedMessages }, 200);
 });
 
-router.post("/chat", async (c) => {
+router.get("/chat", async (c) => {
   try {
     const db = c.get("db");
-    const body = await c.req.json();
-    const { success } = ChatSchema.safeParse(body);
-    if (!success) return c.json({ message: "Invalid Inputs" }, 400);
 
-    let { message, model, conversationId } = body;
+    let { conversationId } = c.req.query();
     conversationId = conversationId ?? crypto.randomUUID();
 
     const id = c.env.CONVERSATION.idFromName(conversationId)
     const stub = c.env.CONVERSATION.get(id)
 
-    const stream = await stub.streamResponse({ role: "user" as Role, content: message }, model);
-
-    const reader = stream.getReader();
-    const decoder = new TextDecoder();
-    let fullContent = "";
-
-    return streamSSE(c, async (stream) => {
-      let buffer = "";
-      let isDone = false;
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const events = buffer.split("\n\n");
-          buffer = events.pop() ?? "";
-
-          for (const eventBlock of events) {
-            if (eventBlock.includes("data: [DONE]")) {
-              isDone = true;
-              continue;
-            }
-
-            const dataLine = eventBlock
-              .split("\n")
-              .find((l) => l.startsWith("data: "));
-
-            if (!dataLine) continue;
-
-            const json = JSON.parse(dataLine.slice(6));
-
-            const token =
-              json.response ??
-              json.choices?.[0]?.delta?.content ??
-              "";
-
-            if (token) {              
-              fullContent += token;
-              await stream.writeSSE({
-                event: "token",
-                data: JSON.stringify({ token }),
-              });
-            }
-          }
-
-          if (isDone) {
-            await stream.writeSSE({
-              event: "done",
-              data: JSON.stringify({ conversationId }),
-            });
-            await stream.close();
-            return;
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
-    });
+    return stub.fetch(c.req.raw);
   } catch (error) {
     console.error(error);
     return c.json({ message: "Internal Server Error" }, 500);
