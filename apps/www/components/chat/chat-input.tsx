@@ -2,8 +2,8 @@
 
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Role } from "@workspace/types";
-import { Paperclip, X } from "lucide-react";
+import { Role, WebSocketClientMessage, WebSocketCreateStreamMessage, WebSocketServerMessage } from "@workspace/types";
+import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useMessages } from "@/store/useMessage";
 import { AttachmentChip } from "./attachment-chip";
@@ -12,6 +12,8 @@ import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
+import { useSocket } from "@/hooks/useSocket";
+import { useParams } from "next/navigation";
 
 export const ChatInput = () => {
   const { addMessage, updateMessage } = useMessages();
@@ -22,8 +24,11 @@ export const ChatInput = () => {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
+  const { conversationId } = useParams();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const socket = useSocket(conversationId as string);
   const hasInput = input.length > 0;
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
@@ -109,60 +114,22 @@ export const ChatInput = () => {
     setInput("");
     try {
       // sending a request for ai response.
-      const response = await fetch("http://localhost:8787/api/v1/ai/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          role: "user",
-          model: "@cf/moonshotai/kimi-k2.6",
-          message: input,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Something went wrong");
+      const createMessage: WebSocketCreateStreamMessage = {
+        type: "chat.stream.create",
+        eventId: crypto.randomUUID(),
+        role: Role.User,
+        content: input,
+        conversationId: "kdscoksdpocksdkcdokcpokfkokcoskdck",
+        model: "@cf/moonshotai/kimi-k2.6",
       }
+      socket.current!.send(JSON.stringify(createMessage));
 
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          const events = buffer.split("\n\n");
-          buffer = events.pop() ?? "";
-
-          for (const eventBlock of events) {
-            const lines = eventBlock.split("\n").filter(Boolean);
-
-            let eventName = "token";
-            let dataLine = "";
-
-            for (const line of lines) {
-              if (line.startsWith("event: ")) eventName = line.slice(7);
-              if (line.startsWith("data: ")) dataLine = line.slice(6);
-            }
-
-            if (!dataLine) continue;
-
-            const payload = JSON.parse(dataLine);
-
-            if (eventName === "token") {
-              updateMessage({ token: payload.token });
-            } else if (eventName === "done") {
-              reader.releaseLock();
-              return;
-            }
-          }
+      socket.current!.onmessage = (event) => {
+        const parsed = JSON.parse(event.data) as WebSocketServerMessage;
+        if(parsed.type === "chat.stream.response") {
+          updateMessage({ token: parsed.content });
         }
-      } catch (error) {}
+      }
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
