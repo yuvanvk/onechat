@@ -1,14 +1,18 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ComponentProps, useRef } from "react";
+import { ComponentProps } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { useSidebar } from "@/store/useSidebar";
 import { Button } from "@workspace/ui/components/button";
+import { useConversations } from "@/hooks/useConversations";
 import { SidebarToggleIcon } from "@workspace/ui/components/unlumen-ui/sidebar-toggle-icon";
 
 export const Sidebar = () => {
+  const router = useRouter();
   const { open } = useSidebar();
+  const conversations = useConversations();
 
   return (
     <motion.div
@@ -18,13 +22,23 @@ export const Sidebar = () => {
         ease: "easeIn",
       }}
       className={cn(
-        "flex flex-col max-w-[300px] w-full bg-[#121212] backdrop-blur-lg absolute left-2 inset-y-2 rounded-2xl",
+        "flex flex-col max-w-[300px] w-full bg-[#121212] backdrop-blur-lg absolute left-2 inset-y-2 rounded-2xl overflow-hidden",
       )}
     >
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Conversations</SidebarGroupLabel>
-          <SideBarItem>How to Learn AI?</SideBarItem>
+          {conversations.length === 0 && (
+            <span className="text-sm text-neutral-500 text-center mt-6">
+              No chats found.
+            </span>
+          )}
+          {conversations.length > 0 &&
+            conversations.map((conversation, idx) => (
+              <SideBarItem key={idx} onClick={() => router.push(`/c/${conversation.id}`)}>
+                {conversation.title}
+              </SideBarItem>
+            ))}
         </SidebarGroup>
       </SidebarContent>
     </motion.div>
