@@ -16,6 +16,7 @@ export type WebSocketCancelMessage = {
 export type WebSocketRegenerateStreamMessage = {
   type: "chat.stream.regenerate";
   eventId: string;
+  messageId: string;
   conversationId: string;
   model: string;
 };
@@ -45,11 +46,16 @@ export type WebSocketServerMessage =
   | WebSocketStreamAIDone;
 
 
-  export type Message = {
+export type Message = {
   id?: string
   role: Role;
   content: string;
 };
+
+export type Conversation = {
+  id: string;
+  title: string;
+}
 
 export enum Role {
   Assistant = "assistant",
