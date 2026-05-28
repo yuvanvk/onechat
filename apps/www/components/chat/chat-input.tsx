@@ -2,33 +2,37 @@
 
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Role, WebSocketClientMessage, WebSocketCreateStreamMessage, WebSocketServerMessage } from "@workspace/types";
+import {
+  Role,
+  WebSocketClientMessage,
+  WebSocketCreateStreamMessage,
+  WebSocketServerMessage,
+} from "@workspace/types";
 import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
-import { useMessages } from "@/store/useMessage";
+import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
-import { ChangeEvent, useRef, useState } from "react";
+import { act, ChangeEvent, useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
 import { useSocket } from "@/hooks/useSocket";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export const ChatInput = () => {
-  const { addMessage, updateMessage } = useMessages();
-
-  const [loading, setLoading] = useState(false);
+  const { addMessage, updateMessage } = useChatStore();
   const [input, setInput] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
-  const { conversationId } = useParams();
+  const { id } = useParams();
+  const router = useRouter();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  const socket = useSocket(conversationId as string);
+  const socket = useSocket(id as string);
   const hasInput = input.length > 0;
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
@@ -91,70 +95,87 @@ export const ChatInput = () => {
 
   // we take the file and filter it out of the attachment array
   function removeFile(id: string) {
-    setAttachments(prev => {
-      const target = prev.find(a => a.id == id)
-      if(target?.previewUrl) URL.revokeObjectURL(target.previewUrl)
-      return prev.filter(a => a.id != id)
-    })
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id == id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((a) => a.id != id);
+    });
   }
 
   async function handleAIResponse() {
+    const content = input
+    setInput("");
+    let activeId = id as string;
+    if (!activeId) {
+      const response = await fetch("http://localhost:8787/api/v1/ai/create", {
+        method: "POST",
+      });
+
+      const { data } = await response.json();
+      activeId = data.conversationId;
+
+      window.history.pushState(null, "", `/c/${activeId}`);
+    }
     addMessage({
       id: "new-user-message",
       role: "user" as Role,
       content: input,
     });
-    setLoading(true);
+
     addMessage({
       id: "new-ai-message",
       role: "assistant" as Role,
       content: "",
     });
 
-    setInput("");
     try {
-      // sending a request for ai response.
       const createMessage: WebSocketCreateStreamMessage = {
         type: "chat.stream.create",
         eventId: crypto.randomUUID(),
         role: Role.User,
-        content: input,
-        conversationId: "kdscoksdpocksdkcdokcpokfkokcoskdck",
+        content,
+        conversationId: id as string,
         model: "@cf/moonshotai/kimi-k2.6",
-      }
+      };
       socket.current!.send(JSON.stringify(createMessage));
 
       socket.current!.onmessage = (event) => {
         const parsed = JSON.parse(event.data) as WebSocketServerMessage;
-        if(parsed.type === "chat.stream.response") {
+        if (parsed.type === "chat.stream.response") {
           updateMessage({ token: parsed.content });
         }
-      }
+      };
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       }
     } finally {
-      setLoading(false);
     }
   }
 
   return (
     <motion.div
+      layout
       ref={dropZoneRef}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-3xl border border-[#191919] dark:bg-[#121212] max-w-3xl w-full mx-auto fixed bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-3.5 gap-2",
+        "flex flex-col rounded-3xl border border-[#191919] dark:bg-[#121212] max-w-3xl w-full mx-auto px-3.5 py-3.5 gap-2 fixed",
+        id && "bottom-3 left-1/2 -translate-x-1/2",
+        !id && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         isDraggingOver && "drag-active",
       )}
     >
       {attachments.length > 0 && (
         <div className="flex items-center gap-4 mb-3">
           {attachments.map((attachment) => (
-            <AttachmentChip file={attachment} key={attachment.id} onRemove={() => removeFile(attachment.id)}/>
+            <AttachmentChip
+              file={attachment}
+              key={attachment.id}
+              onRemove={() => removeFile(attachment.id)}
+            />
           ))}
         </div>
       )}
