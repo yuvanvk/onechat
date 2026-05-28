@@ -25,32 +25,6 @@ CREATE TABLE `conversation` (
 );
 --> statement-breakpoint
 CREATE INDEX `conversation_user_idx` ON `conversation` (`user_id`);--> statement-breakpoint
-CREATE TABLE `image` (
-	`id` text PRIMARY KEY NOT NULL,
-	`image_url` text NOT NULL,
-	`message_id` text NOT NULL,
-	`created_at` integer NOT NULL,
-	FOREIGN KEY (`message_id`) REFERENCES `message`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE TABLE `message` (
-	`id` text PRIMARY KEY NOT NULL,
-	`role` text NOT NULL,
-	`content` text,
-	`conversation_id` text NOT NULL,
-	`created_at` integer NOT NULL,
-	FOREIGN KEY (`conversation_id`) REFERENCES `conversation`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE INDEX `message_conversation_idx` ON `message` (`conversation_id`);--> statement-breakpoint
-CREATE TABLE `pdf` (
-	`id` text PRIMARY KEY NOT NULL,
-	`public_url` text NOT NULL,
-	`message_id` text NOT NULL,
-	`created_at` integer NOT NULL,
-	FOREIGN KEY (`message_id`) REFERENCES `message`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
 CREATE TABLE `session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
