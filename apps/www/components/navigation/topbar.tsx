@@ -14,21 +14,27 @@ export function Topbar() {
     >
       <Button
         size={"icon-sm"}
-        className={cn("rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700")}
+        className={cn(
+          "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
+        )}
       >
         <Ghost />
       </Button>
 
       <Button
         size={"icon-sm"}
-        className={cn("rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700")}
+        className={cn(
+          "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
+        )}
       >
         <Cog />
       </Button>
-      
+
       <Button
         size={"icon-sm"}
-        className={cn("rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700")}
+        className={cn(
+          "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
+        )}
       >
         <Command />
       </Button>

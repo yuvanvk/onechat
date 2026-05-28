@@ -35,7 +35,7 @@ export default function RootLayout({
     >
       <body className="selection:bg-white selection:text-black">
         <Provider>{children}</Provider>
-        <Toaster position="bottom-right"/>
+        <Toaster />
       </body>
     </html>
   );
