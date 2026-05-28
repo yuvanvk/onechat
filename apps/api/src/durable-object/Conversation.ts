@@ -1,5 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
-import { InsertIntoMessage, MessageSchema, QueryMessages } from "./sql";
+import {
+  InsertIntoMessage,
+  MessageSchema,
+  QueryMessages,
+  UpdateConversationTitle,
+} from "./sql";
 import {
   Message,
   Role,
@@ -47,7 +52,7 @@ export class Conversation extends DurableObject<Env> {
         this.abortController.abort();
         break;
       case "chat.stream.regenerate":
-        this.handleStreamRegenerate(parsed);
+        this.handleStreamRegenerate(ws, parsed);
         break;
     }
   }
@@ -133,9 +138,52 @@ export class Conversation extends DurableObject<Env> {
           conversationId,
         };
 
-        this.ctx.storage.sql.exec(InsertIntoMessage, crypto.randomUUID(), Role.Assistant, fullContent, model, Date.now());
+        this.messages = [
+          ...this.messages,
+          { role: "assistant" as Role.Assistant, content: fullContent },
+        ];
 
+        this.ctx.storage.sql.exec(
+          InsertIntoMessage,
+          crypto.randomUUID(),
+          Role.Assistant,
+          fullContent,
+          model,
+          Date.now(),
+        );
         ws.send(JSON.stringify(streamDoneMessage));
+      }
+
+      if (this.messages.length === 2) {
+        console.log("inside title update");
+
+        const firstUserMessage = this.messages.find(
+          (x) => x.role === Role.User,
+        )?.content;
+        const response = (await this.env.AI.run(
+          "@cf/meta/llama-3.2-3b-instruct",
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You generate short conversation title. Reply with only the title, 3-5 words, no punctuation, no quotes.",
+              },
+              {
+                role: "user",
+                content: firstUserMessage,
+              },
+            ],
+          },
+        )) as { response: string };
+        console.log(response);
+        const title = response.response?.trim();
+
+        console.log(title);
+        
+        await this.env.D1_DATABASE.prepare(UpdateConversationTitle)
+          .bind(title, conversationId)
+          .run();
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -150,8 +198,28 @@ export class Conversation extends DurableObject<Env> {
     }
   }
 
-  async handleStreamRegenerate(message: WebSocketRegenerateStreamMessage) {
+  async handleStreamRegenerate(
+    ws: WebSocket,
+    message: WebSocketRegenerateStreamMessage,
+  ) {
+    this.abortController = new AbortController();
+    const result = this.ctx.storage.sql.exec(
+      "SELECT content FROM messages WHERE id = ?",
+      [message.messageId],
+    );
 
+    const regenerateStream = await this.env.AI.run(
+      message.model,
+      {
+        prompt:
+          result +
+          "For the above text regenerate it properly with exact context of matter",
+        stream: true,
+      },
+      {
+        signal: this.abortController.signal,
+      },
+    );
   }
 
   async getMessages() {
