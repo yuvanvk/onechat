@@ -12,7 +12,7 @@ interface MessageStore {
   }) => void;
 }
 
-const useMessages = create<MessageStore>((set, get) => ({
+export const useChatStore = create<MessageStore>((set, get) => ({
   messages: [],
   setMessages: (messages) => set({ messages }),
   addMessage: (message) => set({ messages: [...get().messages, message] }),
@@ -32,4 +32,3 @@ const useMessages = create<MessageStore>((set, get) => ({
     }),
 }));
 
-export { useMessages };
