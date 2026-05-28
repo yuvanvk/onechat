@@ -10,3 +10,4 @@ export const MessageSchema = `
 
 export const QueryMessages = `SELECT id, role, content FROM messages ORDER BY created_at ASC`;
 export const InsertIntoMessage = `INSERT INTO messages (id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?)`
+export const UpdateConversationTitle = `UPDATE conversation SET title = ? WHERE id = ?` 
