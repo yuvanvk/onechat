@@ -13,6 +13,7 @@ import {
   WebSocketRegenerateStreamMessage,
   WebSocketStreamAIDone,
   WebSocketStreamAIResponse,
+  WebSocketTitleGeneratedMessage,
 } from "@workspace/types";
 
 export class Conversation extends DurableObject<Env> {
@@ -155,11 +156,7 @@ export class Conversation extends DurableObject<Env> {
       }
 
       if (this.messages.length === 2) {
-        console.log("inside title update");
-
-        const firstUserMessage = this.messages.find(
-          (x) => x.role === Role.User,
-        )?.content;
+        const firstUserMessage = this.messages.find((x) => x.role === Role.User)?.content;
         const response = (await this.env.AI.run(
           "@cf/meta/llama-3.2-3b-instruct",
           {
@@ -167,7 +164,7 @@ export class Conversation extends DurableObject<Env> {
               {
                 role: "system",
                 content:
-                  "You generate short conversation title. Reply with only the title, 3-5 words, no punctuation, no quotes.",
+                 "You are a title generator. You output only 3-5 words. Nothing else. No punctuation. No quotes. No labels.", 
               },
               {
                 role: "user",
@@ -176,14 +173,19 @@ export class Conversation extends DurableObject<Env> {
             ],
           },
         )) as { response: string };
-        console.log(response);
         const title = response.response?.trim();
 
-        console.log(title);
-        
         await this.env.D1_DATABASE.prepare(UpdateConversationTitle)
           .bind(title, conversationId)
           .run();
+
+        const titleGeneratedEvent: WebSocketTitleGeneratedMessage = {
+          type: "chat.title.generated",
+          conversationId,
+          eventId,
+          title
+        } 
+        ws.send(JSON.stringify(titleGeneratedEvent));
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
