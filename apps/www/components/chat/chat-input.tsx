@@ -12,7 +12,7 @@ import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
-import { act, ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
@@ -21,18 +21,18 @@ import { useSocket } from "@/hooks/useSocket";
 import { useParams, useRouter } from "next/navigation";
 
 export const ChatInput = () => {
-  const { addMessage, updateMessage } = useChatStore();
+  const { id } = useParams();
+  const router = useRouter();
+  const { addMessage } = useChatStore();
+  
   const [input, setInput] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
-  const { id } = useParams();
-  const router = useRouter();
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  const socket = useSocket(id as string);
+  const { send } = useSocket(id as string);
   const hasInput = input.length > 0;
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
@@ -137,14 +137,7 @@ export const ChatInput = () => {
         conversationId: id as string,
         model: "@cf/moonshotai/kimi-k2.6",
       };
-      socket.current!.send(JSON.stringify(createMessage));
-
-      socket.current!.onmessage = (event) => {
-        const parsed = JSON.parse(event.data) as WebSocketServerMessage;
-        if (parsed.type === "chat.stream.response") {
-          updateMessage({ token: parsed.content });
-        }
-      };
+      send(createMessage);
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
