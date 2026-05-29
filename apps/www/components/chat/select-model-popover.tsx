@@ -7,30 +7,48 @@ import { AnimatePresence, motion } from "motion/react";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
 import { SELECT_MODELS } from "@/lib/supported-models/models";
-import { Brain, Code2, Eye, Filter, Image, Search, Star } from "lucide-react";
+import {
+  Bot,
+  Brain,
+  Code2,
+  Eye,
+  Filter,
+  Globe,
+  Image,
+  Search,
+  Star,
+} from "lucide-react";
+import { IoChatbubbleOutline } from "react-icons/io5";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 
 export const SelectModelPopover = () => {
-  const { model, setModel } = useModel();
+  const { setModelName, setModel, modelName } = useModel();
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [provider, setProvider] = useState("favourites");
 
   const hasSearch = search.length > 0;
 
-  const modelsToDisplayBasedOnProvider = SELECT_MODELS
-    .filter((x) => x.id == provider)
-    .flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
+  const modelsToDisplayBasedOnProvider = SELECT_MODELS.filter(
+    (x) => x.id == provider,
+  ).flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
 
-  const modelsBasedOnSearch = SELECT_MODELS
-    .flatMap((provider) => (provider.models ?? [])
-    .filter((m) => 
-      m.id.toLowerCase().includes(search.toLowerCase()) 
-      || m.displayName.toLowerCase().includes(search.toLowerCase()) 
-      || m.description.toLowerCase().includes(search.toLowerCase()),
+  const modelsBasedOnSearch = SELECT_MODELS.flatMap((provider) =>
+    (provider.models ?? []).filter(
+      (m) =>
+        m.id.toLowerCase().includes(search.toLowerCase()) ||
+        m.displayName.toLowerCase().includes(search.toLowerCase()) ||
+        m.description.toLowerCase().includes(search.toLowerCase()),
     ),
   );
 
-  const displayModels = hasSearch ? modelsBasedOnSearch : modelsToDisplayBasedOnProvider;
+  const displayModels = hasSearch
+    ? modelsBasedOnSearch
+    : modelsToDisplayBasedOnProvider;
 
   return (
     <div className="relative w-fit">
@@ -48,7 +66,7 @@ export const SelectModelPopover = () => {
             open && "text-neutral-200",
           )}
         >
-          Kimi K2
+          {modelName}
         </div>
         <motion.svg
           animate={{ rotate: open ? "180deg" : "0deg" }}
@@ -107,8 +125,8 @@ export const SelectModelPopover = () => {
               {!hasSearch && (
                 <div
                   className={cn(
-                    "absolute inset-y-0 bg-neutral-950/50 w-15 rounded-tr-xl border-r border-t border-neutral-900",
-                    "flex flex-col gap-5 items-center py-4 overflow-y-scroll scrollbar-hidden",
+                    "absolute inset-y-0 bg-neutral-900 w-15 rounded-tr-xl border-r border-t border-neutral-900",
+                    "flex flex-col gap-7 items-center py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >
                   {SELECT_MODELS.map((model, idx) => {
@@ -120,18 +138,25 @@ export const SelectModelPopover = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ ease: "linear", duration: 0.1 }}
-                            className="w-px h-6 bg-neutral-300 right-[-13.5px] absolute top-1/2 -translate-y-1/2"
+                            className="w-px h-6 bg-neutral-300 right-[-19px] absolute top-1/2 -translate-y-1/2"
                           />
                         )}
-                        <Button
-                          key={model.id}
-                          size={"icon"}
-                          variant={"ghost"}
-                          onClick={() => setProvider(model.id)}
-                        >
-                          <Icon className="hover:bg-neutral-100 bg-neutral-800 cursor-pointer" />
-                        </Button>
-                        {model.id === "favourites" && <hr className="mt-3" />}
+
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div
+                              key={model.id}
+                              onClick={() => setProvider(model.id)}
+                              className="cursor-pointer"
+                            >
+                              <Icon size={20} />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            {model.id}
+                          </TooltipContent>
+                        </Tooltip>
+                        {model.id === "favourites" && <hr className="mt-3 " />}
                       </div>
                     );
                   })}
@@ -145,12 +170,20 @@ export const SelectModelPopover = () => {
                   "flex flex-col gap-5 py-5 px-4 overflow-y-scroll scrollbar-hidden",
                 )}
               >
-                {displayModels.length === 0 && <span className="text-sm text-neutral-500 text-center">No results found.</span>} 
+                {displayModels.length === 0 && (
+                  <span className="text-sm text-neutral-500 text-center">
+                    No results found.
+                  </span>
+                )}
                 {displayModels.length > 0 &&
                   displayModels.map((model) => {
                     return (
                       <div
                         key={model?.id}
+                        onClick={() => {
+                          setModel(model?.id!)
+                          setModelName(model?.displayName!)
+                        }}
                         className="flex flex-col select-none cursor-pointer"
                       >
                         <div className="flex items-center justify-between">
@@ -185,20 +218,79 @@ export const SelectModelPopover = () => {
                             </Button>
                           </div>
 
-                          <div className="flex items-center gap-2 bg-neutral-800 px-1 py-1 rounded-lg text-neutral-400">
-                            {model?.capabilities.map((cap, idx) => {
-                              const size = 12;
-                              switch (cap) {
-                                case "code":
-                                  return <Code2 size={size} key={idx}/>;
-                                case "image-gen":
-                                  return <Image size={size} key={idx}/>;
-                                case "reasoning":
-                                  return <Brain size={size} key={idx}/>;
-                                case "vision":
-                                  return <Eye size={size} key={idx}/>;
-                              }
-                            })}
+                          <div className="flex items-center gap-2 bg-neutral-800 px-1 py-1 rounded-lg text-neutral-300">
+                            {model?.capabilities &&
+                              model?.capabilities.map((cap, idx) => {
+                                const size = 12;
+                                switch (cap) {
+                                  case "coding":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Code2 size={size}  />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  case "image-gen":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Image size={size} />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+
+                                  case "reasoning":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Brain size={size} />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  case "vision":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Eye size={size}  />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  case "text":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <IoChatbubbleOutline
+                                            size={size}
+                                          />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  case "multilingual":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Globe size={size}  />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  case "multi-agent":
+                                    return (
+                                      <Tooltip key={idx}>
+                                        <TooltipTrigger>
+                                          <Bot size={size}  />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cap}</TooltipContent>
+                                      </Tooltip>
+                                    );
+                                }
+                              })}
                           </div>
                         </div>
                         <div className="text-xs text-neutral-500">
