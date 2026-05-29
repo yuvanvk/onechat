@@ -35,6 +35,13 @@ export type WebSocketStreamAIDone = {
   conversationId: string;
 };
 
+export type WebSocketTitleGeneratedMessage = {
+  type: "chat.title.generated";
+  eventId: string;
+  title: string;
+  conversationId: string; 
+}
+
 export type WebSocketClientMessage =
   | WebSocketCreateStreamMessage
   | WebSocketCancelMessage
@@ -43,7 +50,8 @@ export type WebSocketClientMessage =
 
 export type WebSocketServerMessage =
   | WebSocketStreamAIResponse
-  | WebSocketStreamAIDone;
+  | WebSocketStreamAIDone
+  | WebSocketTitleGeneratedMessage;
 
 
 export type Message = {
