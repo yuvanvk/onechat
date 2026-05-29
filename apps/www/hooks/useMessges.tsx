@@ -22,10 +22,9 @@ export function useMessage(conversationId: string) {
           { signal: abortController.signal },
         );
         const { data, message } = await response.json();
-        console.log(message, data);
         
         toast(message);
-        setMessages(data.messages);
+        setMessages(data.messages ?? []);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setError((error as Error).message);
