@@ -1,22 +1,27 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ComponentProps } from "react";
+import { ComponentProps, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { useSidebar } from "@/store/useSidebar";
 import { Button } from "@workspace/ui/components/button";
-import { useConversations } from "@/hooks/useConversations";
 import { SidebarToggleIcon } from "@workspace/ui/components/unlumen-ui/sidebar-toggle-icon";
+import { useConversationStore } from "@/store/useConversation";
 
 export const Sidebar = () => {
+
   const router = useRouter();
   const { open } = useSidebar();
-  const conversations = useConversations();
+  const { conversations, fetch } = useConversationStore();
+
+  useEffect(() => {
+    fetch()
+  }, [])
 
   return (
     <motion.div
-      animate={{ x: open ? "0%" : "-102%" }}
+      animate={{ x: open ? "0%" : "-103%" }}
       transition={{
         duration: 0.2,
         ease: "easeIn",
@@ -71,7 +76,7 @@ export const SidebarGroupLabel = ({
   className?: string;
 }) => {
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-start gap-2 mb-0.5">
       <div className="flex flex-col gap-[7px]">
         {[0, 1].map((_, idx) => (
           <div
@@ -133,7 +138,7 @@ export const SideBarItem = ({
       <Button
         variant={"ghost"}
         className={cn(
-          "p-0 text-[15px] font-normal bg-transparent hover:bg-transparent!",
+          "p-0 text-[15px] font-normal bg-transparent hover:bg-transparent! h-auto",
           className,
         )}
         {...props}
