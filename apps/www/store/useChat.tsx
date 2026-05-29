@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Message } from "@workspace/types";
 
-interface MessageStore {
+interface ChatStore {
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
@@ -12,7 +12,7 @@ interface MessageStore {
   }) => void;
 }
 
-export const useChatStore = create<MessageStore>((set, get) => ({
+export const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
   setMessages: (messages) => set({ messages }),
   addMessage: (message) => set({ messages: [...get().messages, message] }),
