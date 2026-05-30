@@ -4,13 +4,15 @@ import { useChatStore } from "@/store/useChat";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export function useMessage(conversationId: string) {
-  const { setMessages } = useChatStore();
+export function useMessage(id: string) {
+  const { setMessages, pendingMessage } = useChatStore();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!id) return; 
+    if (pendingMessage !== null) return;
+
     const abortController = new AbortController();
 
     const fetchConversationMessages = async () => {
@@ -18,11 +20,11 @@ export function useMessage(conversationId: string) {
       setError(null);
       try {
         const response = await fetch(
-          `http://localhost:8787/api/v1/ai/conversations/${conversationId}`,
+          `http://localhost:8787/api/v1/ai/conversations/${id}`,
           { signal: abortController.signal },
         );
         const { data, message } = await response.json();
-        
+
         toast(message);
         setMessages(data.messages ?? []);
       } catch (error) {
@@ -36,7 +38,7 @@ export function useMessage(conversationId: string) {
     fetchConversationMessages();
 
     return () => abortController.abort();
-  }, [conversationId]);
+  }, [id]);
 
   return { isLoading, error };
 }
