@@ -4,15 +4,13 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 import {
   Role,
-  WebSocketClientMessage,
   WebSocketCreateStreamMessage,
-  WebSocketServerMessage,
 } from "@workspace/types";
 import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
@@ -23,16 +21,16 @@ import { useParams, useRouter } from "next/navigation";
 export const ChatInput = () => {
   const { id } = useParams();
   const router = useRouter();
-  const { addMessage } = useChatStore();
-  
+
+  const { addMessage, pendingMessage, conversationId, setConversationId, setPendingMessage } = useChatStore();
+
   const [input, setInput] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  const { send } = useSocket(id as string);
+  const { send } = useSocket(conversationId as string);
   const hasInput = input.length > 0;
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
@@ -93,7 +91,6 @@ export const ChatInput = () => {
     );
   }
 
-  // we take the file and filter it out of the attachment array
   function removeFile(id: string) {
     setAttachments((prev) => {
       const target = prev.find((a) => a.id == id);
@@ -102,24 +99,57 @@ export const ChatInput = () => {
     });
   }
 
+  useEffect(() => {
+    if(!pendingMessage || !id) return;
+    const messageToSend = pendingMessage;
+    try {
+      send(messageToSend);
+      setPendingMessage(null)
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        }
+      } 
+  }, [pendingMessage, id, send]);
+
   async function handleAIResponse() {
+    
     const content = input
     setInput("");
     let activeId = id as string;
+
     if (!activeId) {
       const response = await fetch("http://localhost:8787/api/v1/ai/create", {
         method: "POST",
       });
-
       const { data } = await response.json();
       activeId = data.conversationId;
-
-      window.history.pushState(null, "", `/c/${activeId}`);
+      setConversationId(activeId);
+      setPendingMessage({
+        type: "chat.stream.create",
+        eventId: crypto.randomUUID(),
+        role: Role.User,
+        content,
+        conversationId: activeId,
+        model: "@cf/moonshotai/kimi-k2.6"
+      })
+      addMessage({
+        id: "new-user-message",
+        role: "user" as Role,
+        content,
+      });
+      addMessage({
+        id: "new-ai-message",
+        role: "assistant" as Role,
+        content: "",
+      });
+      router.push(`/c/${activeId}`);
+      return;
     }
     addMessage({
       id: "new-user-message",
       role: "user" as Role,
-      content: input,
+      content: content,
     });
 
     addMessage({
@@ -134,7 +164,7 @@ export const ChatInput = () => {
         eventId: crypto.randomUUID(),
         role: Role.User,
         content,
-        conversationId: id as string,
+        conversationId: activeId,
         model: "@cf/moonshotai/kimi-k2.6",
       };
       send(createMessage);

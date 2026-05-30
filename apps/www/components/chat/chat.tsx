@@ -9,12 +9,22 @@ import { Topbar } from "@/components/navigation/topbar";
 import { MessageCard } from "@/components/card/message-card";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
+import { useEffect } from "react";
+import { useConversationStore } from "@/store/useConversation";
 
 export const Chat = () => {
-  const { messages } = useChatStore();
   const { id } = useParams();
+  const { messages, setConversationId } = useChatStore();
+  const { fetch } = useConversationStore();
   const { isLoading, error } = useMessage(id as string);
 
+  useEffect(() => {
+    if(id) {
+      setConversationId(id as string);
+      fetch();
+    }
+  }, [id])
+  
   if(error) {
     toast.error(error);
   }
