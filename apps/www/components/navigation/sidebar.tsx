@@ -1,19 +1,21 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ComponentProps, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { useSidebar } from "@/store/useSidebar";
+import { ComponentProps, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
-import { SidebarToggleIcon } from "@workspace/ui/components/unlumen-ui/sidebar-toggle-icon";
 import { useConversationStore } from "@/store/useConversation";
+import { SidebarToggleIcon } from "@workspace/ui/components/unlumen-ui/sidebar-toggle-icon";
+import { useChatStore } from "@/store/useChat";
 
 export const Sidebar = () => {
 
   const router = useRouter();
   const { open } = useSidebar();
   const { conversations, fetch } = useConversationStore();
+  const { setConversationId } = useChatStore();
 
   useEffect(() => {
     fetch()
@@ -40,8 +42,11 @@ export const Sidebar = () => {
           )}
           {conversations.length > 0 &&
             conversations.map((conversation, idx) => (
-              <SideBarItem key={idx} onClick={() => router.push(`/c/${conversation.id}`)}>
-                {conversation.title}
+              <SideBarItem key={idx} onClick={() => {
+                setConversationId(conversation.id)
+                router.push(`/c/${conversation.id}`)
+              }}>
+                {conversation.title.slice(0, conversation.title.length > 30 ? 30 : conversation.title.length)}...
               </SideBarItem>
             ))}
         </SidebarGroup>
