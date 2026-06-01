@@ -30,10 +30,9 @@ export function MessageCard({ id, content, role }: Message) {
           ease: "easeOut",
         }}
         className={cn(
-          isUser &&
-            "w-fit max-w-xs ml-auto px-2 py-1.5 bg-neutral-800 rounded-xl",
-          isAssistant && "max-w-2xl w-full mr-auto p-1.5",
-          "m-10 text-neutral-100 text-[15px]",
+          isUser && "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto",
+          isAssistant && "max-w-2xl w-full p-1.5 mr-auto",
+          "mb-10 text-neutral-100 text-[15px]",
         )}
       >
         {isUser && content}
@@ -71,7 +70,6 @@ export function MessageCard({ id, content, role }: Message) {
           <Button 
             size={"icon-xs"} 
             variant={"ghost"}
-            onClick={handleCopy}
           >
             <Copy />
           </Button>
