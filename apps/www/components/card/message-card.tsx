@@ -11,6 +11,15 @@ export function MessageCard({ id, content, role }: Message) {
   const isUser = role === "user";
   const isAssistant = role === "assistant";
 
+  async function handleCopy() {
+    if(!content) return;
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch (error) {
+      console.error("Failed to copy:", error)
+    }
+  }
+
   return (
     <>
       <motion.div
@@ -24,7 +33,7 @@ export function MessageCard({ id, content, role }: Message) {
           isUser &&
             "w-fit max-w-xs ml-auto px-2 py-1.5 bg-neutral-800 rounded-xl",
           isAssistant && "max-w-2xl w-full mr-auto p-1.5",
-          "mb-3 text-neutral-100 text-[15px]",
+          "m-10 text-neutral-100 text-[15px]",
         )}
       >
         {isUser && content}
@@ -57,9 +66,13 @@ export function MessageCard({ id, content, role }: Message) {
         <motion.div
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
-          className="flex items-center gap-2 justify-end"
+          className="flex items-center gap-1 justify-end"
         >
-          <Button size={"icon-xs"} variant={"ghost"}>
+          <Button 
+            size={"icon-xs"} 
+            variant={"ghost"}
+            onClick={handleCopy}
+          >
             <Copy />
           </Button>
 
@@ -69,8 +82,12 @@ export function MessageCard({ id, content, role }: Message) {
         </motion.div>
       )}
       {content && isAssistant && (
-        <motion.div>
-          <Button size={"icon-xs"} variant={"ghost"}>
+        <motion.div className="flex items-center gap-1">
+          <Button 
+            size={"icon-xs"} 
+            variant={"ghost"}
+            onClick={handleCopy}
+          >
             <Copy />
           </Button>
           <Button size={"icon-xs"} variant={"ghost"}>
