@@ -97,4 +97,28 @@ router.get("/chat", async (c) => {
   }
 });
 
+router.delete("/chat/delete/:conversationId", async (c) => {
+  try {
+    const db = c.get("db");
+    const conversationId = c.req.param("conversationId");
+
+    if(!conversationId) {
+      return c.json({ message: "Provide conversationId" }, 400);
+    }
+
+    const existing = await db.query.conversation.findFirst({ where: eq(conversation.id, conversationId)});
+    if(!existing) {
+      return c.json({ message: "Invalid Inputs" }, 400);
+    }
+
+    await db.delete(conversation).where(eq(conversation.id, conversationId));
+    const id = c.env.CONVERSATION.idFromName(conversationId);
+    const stub = c.env.CONVERSATION.get(id);
+    await stub.destroy();
+
+    return c.json({ message: "Conversation deleted successfully" });
+  } catch (error) {
+    return c.json({ message: "Interal Server Error" }, 500);
+  }
+})
 export default router;

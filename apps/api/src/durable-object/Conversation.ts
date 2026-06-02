@@ -1,7 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import {
+  ImageSchema,
   InsertIntoMessage,
   MessageSchema,
+  PDFSchema,
   QueryMessages,
   UpdateConversationTitle,
 } from "./sql";
@@ -24,6 +26,9 @@ export class Conversation extends DurableObject<Env> {
     super(ctx, env);
     this.ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(MessageSchema);
+      this.ctx.storage.sql.exec(ImageSchema);
+      this.ctx.storage.sql.exec(PDFSchema);
+
       this.messages = this.ctx.storage.sql
         .exec(QueryMessages)
         .toArray() as Message[];
@@ -66,9 +71,10 @@ export class Conversation extends DurableObject<Env> {
     this.messages = [...this.messages, { role, content }];
     this.abortController = new AbortController();
 
+    const userMessageId = crypto.randomUUID();
     this.ctx.storage.sql.exec(
       InsertIntoMessage,
-      crypto.randomUUID(),
+      userMessageId,
       role,
       content,
       model,
@@ -227,4 +233,15 @@ export class Conversation extends DurableObject<Env> {
   async getMessages() {
     return this.messages;
   }
+
+  async destroy() {
+    await this.ctx.storage.deleteAll();
+  }
 }
+
+
+
+// Create Image and Pdf table in conversation
+// each image or pdf will have messageId associated.
+// maybe create a new type of event handling for input data associated with images or pdf.
+// and then stream back the response.
