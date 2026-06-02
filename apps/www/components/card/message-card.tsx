@@ -12,16 +12,16 @@ export function MessageCard({ id, content, role }: Message) {
   const isAssistant = role === "assistant";
 
   async function handleCopy() {
-    if(!content) return;
+    if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
     } catch (error) {
-      console.error("Failed to copy:", error)
+      console.error("Failed to copy:", error);
     }
   }
 
   return (
-    <>
+    <div className="mb-10 flex flex-col gap-2">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -30,9 +30,10 @@ export function MessageCard({ id, content, role }: Message) {
           ease: "easeOut",
         }}
         className={cn(
-          isUser && "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto",
+          "text-neutral-100 text-[15px]",
           isAssistant && "max-w-2xl w-full p-1.5 mr-auto",
-          "mb-10 text-neutral-100 text-[15px]",
+          isUser &&
+            "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto",
         )}
       >
         {isUser && content}
@@ -57,7 +58,23 @@ export function MessageCard({ id, content, role }: Message) {
                 Thinking…
               </motion.span>
             )}
-            {content && <ReactMarkdown>{content}</ReactMarkdown>}
+            {content && (
+              <div
+                className="prose prose-invert prose-neutral max-w-none
+                  prose-p:text-[15px] prose-p:leading-7 prose-p:text-neutral-100
+                prose-headings:text-neutral-100 prose-headings:font-medium
+                prose-strong:text-neutral-100
+                prose-code:text-neutral-200 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-[13px]         prose-code:before:content-none prose-code:after:content-none
+              prose-pre:bg-neutral-900 prose-pre:border prose-pre:border-neutral-800
+              prose-li:text-neutral-100 prose-li:text-[15px]
+              prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+              prose-blockquote:border-neutral-700 prose-blockquote:text-neutral-400
+          prose-hr:border-neutral-800
+  "
+              >
+                <ReactMarkdown>{content}</ReactMarkdown>
+              </div>
+            )}
           </div>
         )}
       </motion.div>
@@ -67,25 +84,14 @@ export function MessageCard({ id, content, role }: Message) {
           whileHover={{ opacity: 1 }}
           className="flex items-center gap-1 justify-end"
         >
-          <Button 
-            size={"icon-xs"} 
-            variant={"ghost"}
-          >
+          <Button size={"icon-xs"} variant={"ghost"} onClick={handleCopy}>
             <Copy />
-          </Button>
-
-          <Button size={"icon-xs"} variant={"ghost"}>
-            <Pen />
           </Button>
         </motion.div>
       )}
       {content && isAssistant && (
         <motion.div className="flex items-center gap-1">
-          <Button 
-            size={"icon-xs"} 
-            variant={"ghost"}
-            onClick={handleCopy}
-          >
+          <Button size={"icon-xs"} variant={"ghost"} onClick={handleCopy}>
             <Copy />
           </Button>
           <Button size={"icon-xs"} variant={"ghost"}>
@@ -93,6 +99,6 @@ export function MessageCard({ id, content, role }: Message) {
           </Button>
         </motion.div>
       )}
-    </>
+    </div>
   );
 }
