@@ -178,7 +178,6 @@ export const ChatInput = () => {
 
   return (
     <motion.div
-      layout
       ref={dropZoneRef}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}

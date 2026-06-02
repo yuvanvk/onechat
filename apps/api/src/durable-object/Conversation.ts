@@ -239,9 +239,3 @@ export class Conversation extends DurableObject<Env> {
   }
 }
 
-
-
-// Create Image and Pdf table in conversation
-// each image or pdf will have messageId associated.
-// maybe create a new type of event handling for input data associated with images or pdf.
-// and then stream back the response.

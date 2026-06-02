@@ -66,8 +66,8 @@ router.post("/create", async (c) => {
     updatedAt: new Date(),
   });
 
-  return c.json({ message: "Ok" , data: { conversationId } });
-})
+  return c.json({ message: "Ok", data: { conversationId } });
+});
 
 router.get("/chat", async (c) => {
   try {
@@ -75,14 +75,14 @@ router.get("/chat", async (c) => {
 
     let { conversationId } = c.req.query();
 
-    if(!conversationId) {
-      return c.json({ message: "Conversation id is required"}, 400)
+    if (!conversationId) {
+      return c.json({ message: "Conversation id is required" }, 400);
     }
 
     const existing = await db.query.conversation.findFirst({
       where: eq(conversation.id, conversationId),
     });
-  
+
     if (!existing) {
       return c.json({ message: "Conversation not found" }, 404);
     }
@@ -102,12 +102,14 @@ router.delete("/chat/delete/:conversationId", async (c) => {
     const db = c.get("db");
     const conversationId = c.req.param("conversationId");
 
-    if(!conversationId) {
+    if (!conversationId) {
       return c.json({ message: "Provide conversationId" }, 400);
     }
 
-    const existing = await db.query.conversation.findFirst({ where: eq(conversation.id, conversationId)});
-    if(!existing) {
+    const existing = await db.query.conversation.findFirst({
+      where: eq(conversation.id, conversationId),
+    });
+    if (!existing) {
       return c.json({ message: "Invalid Inputs" }, 400);
     }
 
@@ -120,5 +122,51 @@ router.delete("/chat/delete/:conversationId", async (c) => {
   } catch (error) {
     return c.json({ message: "Interal Server Error" }, 500);
   }
-})
+});
+
+router.post("/chat/share/:conversationId", async (c) => {
+  try {
+    const db = c.get("db");
+    const conversationId = c.req.param("conversationId");
+    console.log(conversationId);
+
+    if (!conversationId) {
+      return c.json({ message: "Provide conversationId" }, 400);
+    }
+
+    const existingConversation = await db.query.conversation.findFirst({
+      where: eq(conversation.id, conversationId),
+    });
+
+    if (!existingConversation) {
+      return c.json({ message: "Invalid Inputs" }, 400);
+    }
+
+    if (existingConversation.shareLink) {
+      return c.json({
+        message: "Already Link Generated",
+        data: { shareLink: existingConversation.shareLink },
+      });
+    }
+
+    const link = crypto.randomUUID();
+    const [updated] = await db
+      .update(conversation)
+      .set({ shareLink: link })
+      .where(eq(conversation.id, conversationId))
+      .returning();
+    console.log(updated.shareLink);
+    
+    return c.json(
+      {
+        message: "Link Generated",
+        data: { shareLink: updated.shareLink },
+      },
+      200,
+    );
+  } catch (error) {
+    console.error(error);
+    return c.json({ message: "Internal Server Error" }, 500);
+  }
+});
 export default router;
