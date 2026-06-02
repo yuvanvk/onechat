@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
 import { useSidebar } from "@/store/useSidebar";
 import { ComponentProps, useEffect } from "react";
@@ -16,6 +16,8 @@ export const Sidebar = () => {
   const { open } = useSidebar();
   const { conversations, fetch } = useConversationStore();
   const { setConversationId } = useChatStore();
+
+  const { id } = useParams();
 
   useEffect(() => {
     fetch()
@@ -42,10 +44,14 @@ export const Sidebar = () => {
           )}
           {conversations.length > 0 &&
             conversations.map((conversation, idx) => (
-              <SideBarItem key={idx} onClick={() => {
-                setConversationId(conversation.id)
-                router.push(`/c/${conversation.id}`)
-              }}>
+              <SideBarItem 
+                key={idx}
+                isCurrent={conversation.id === id}
+                onClick={() => {
+                  setConversationId(conversation.id)
+                  router.push(`/c/${conversation.id}`)
+                }}
+              >
                 {conversation.title.slice(0, conversation.title.length > 30 ? 30 : conversation.title.length)}...
               </SideBarItem>
             ))}
@@ -108,8 +114,11 @@ export const SidebarGroupLabel = ({
 export const SideBarItem = ({
   children,
   className,
+  isCurrent,
   ...props
-}: ComponentProps<typeof Button>) => {
+}: ComponentProps<typeof Button> & {
+  isCurrent: boolean
+}) => {
   const barVariants = {
     rest: { width: "32px", backgroundColor: "var(--color-neutral-600)" },
     hover: {
@@ -119,7 +128,7 @@ export const SideBarItem = ({
   };
 
   const middleBarVariants = {
-    rest: { width: "32px", backgroundColor: "#525252" },
+    rest: { width: isCurrent ? "45px" : "32px", backgroundColor: isCurrent ? "#00A6F4" : "#525252" },
     hover: { width: "45px", backgroundColor: "#00A6F4" },
   };
 
@@ -150,7 +159,7 @@ export const SideBarItem = ({
       >
         <motion.span
           variants={{
-            rest: { color: "var(--color-neutral-500)" },
+            rest: { color: isCurrent ? "#00A6F4" : "var(--color-neutral-500)" },
             hover: { color: "#00A6F4" },
           }}
           transition={{ duration: 0.2, ease: "easeOut" }}
