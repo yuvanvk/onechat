@@ -50,7 +50,15 @@ export const verification = sqliteTable("verification", {
 export const conversation = sqliteTable("conversation", {
 	id: t.text("id").primaryKey(),
 	title: t.text("title", { length: 255 }).notNull().default("Untitled"),
+	shareLink: t.text("share_link").unique(),
 	userId: t.text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
 	createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull(),
 	updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 }, (table) => [t.index("conversation_user_idx").on(table.userId)]);
+
+
+export const favourite = sqliteTable("favourite", {
+	id: t.text("favourite").primaryKey(),
+	modelId: t.text("model_id").notNull().unique(),
+	displayName: t.text("display_name").notNull(),
+})

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Forward, Trash2 } from "lucide-react";
-import { Spinner } from "@workspace/ui/components/spinner";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
+import { Spinner } from "@workspace/ui/components/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,31 +16,67 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { useParams, useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@workspace/ui/components/dialog";
+import { Input } from "@workspace/ui/components/input";
 
 export function Topbar() {
   const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [shareLink, setshareLink] = useState<string>("");
 
   async function handleDelete() {
-    if(!id) return;
-    setLoading(true)
-    console.log(id);
+    if (!id) return;
+    setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8787/api/v1/ai/chat/delete/${id}`, {
-        method: "DELETE"
-      });
+      const response = await fetch(
+        `http://localhost:8787/api/v1/ai/chat/delete/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
       const data = await response.json();
-      alert(data.message)
-
       router.push("/");
     } catch (error) {
-        console.log("ERROR in TOPBAR", error);
+      console.log("ERROR in TOPBAR", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
+
+  async function handleShareLinkGeneration() {
+    if(!id) return;
+    setLoading(true)
+    try {
+      const response = await fetch(`http://localhost:8787/api/v1/ai/chat/share/${id}`, {
+        method: "POST",
+      })
+      const { message, data } = await response.json();
+      setshareLink(data.shareLink)
+    } catch (error) {
+      
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleShareLinkCopy() {
+    if(!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+    } catch (error) {
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -47,15 +84,36 @@ export function Topbar() {
         "flex items-center gap-1",
       )}
     >
-      <Button
-        size={"icon-sm"}
-        className={cn(
-          "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
-          "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400",
-        )}
-      >
-        <Forward />
-      </Button>
+      <Dialog>
+        <DialogTrigger asChild onClick={handleShareLinkGeneration}>
+          <Button
+            size={"icon-sm"}
+            className={cn(
+              "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
+              "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400",
+            )}
+          >
+            <Forward />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share this conversation</DialogTitle>
+            <DialogDescription>
+              A shareable link is ready. Copy it and send it to anyone to give
+              them view access.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Input value={shareLink} disabled />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            {loading ? <Spinner /> : <Button variant="outline" onClick={handleShareLinkCopy}>Copy</Button>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -80,8 +138,8 @@ export function Topbar() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-             onClick={handleDelete}
-             className={cn("bg-red-500 text-white")}
+              onClick={handleDelete}
+              className={cn("bg-red-500 text-white")}
             >
               {loading ? <Spinner /> : "Delete"}
             </AlertDialogAction>
