@@ -21,9 +21,7 @@ export default function SharedConversationPage() {
         const response = await fetch(
           `http://localhost:8787/api/v1/share/${shareId}`,
         );
-        const { message, data } = await response.json();
-
-        alert(message);
+        const { data } = await response.json();
         setMessages(data.messages);
       };
       fetchShareConversation();
