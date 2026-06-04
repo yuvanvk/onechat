@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import ai from "@/routes/ai";
 import auth from "@/routes/auth";
 import share from "@/routes/share";
+import r2 from "@/routes/r2";
 
 import { cors } from "hono/cors";
 import { authMiddleware, dbMiddleware } from "@/middleware";
@@ -23,7 +24,8 @@ app.use("*", dbMiddleware);
 const routes = [
   { path: "/auth", router: auth },
   { path: "/ai", router: ai },
-  { path: "/share", router: share } 
+  { path: "/share", router: share },
+  { path: "/r2", router: r2 }
 ];
 
 const api = app.basePath("/api/v1");

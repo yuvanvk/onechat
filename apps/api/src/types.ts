@@ -5,7 +5,12 @@ import { Conversation } from "./durable-object/Conversation"
 export type Bindings = {
     D1_DATABASE: D1Database,
     AI: Ai,
-    CONVERSATION: DurableObjectNamespace<Conversation>
+    IMAGE_BUCKET: R2Bucket,
+    PDFS_BUCKET: R2Bucket,
+    CONVERSATION: DurableObjectNamespace<Conversation>,
+    R2_SECRET_ACCESS_KEY: string,
+    R2_ACCESS_KEY_ID: string,
+    R2_API_ENDPOINT: string,
     BETTER_AUTH_URL: string,
     BETTER_AUTH_SECRET: string,
     GOOGLE_CLIENT_ID: string,

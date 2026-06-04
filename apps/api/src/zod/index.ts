@@ -6,3 +6,9 @@ export const ChatSchema = z.object({
     model: z.string(),
     conversationId: z.string().optional()
 });
+
+export const FileSchema = z.object({
+    size: z.number(),
+    type: z.string(),
+    name: z.string()
+})

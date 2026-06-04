@@ -21,11 +21,11 @@
 	"r2_buckets": [
 		{
 			"binding": "IMAGES_BUCKET",
-			"bucket_name": "onechat-images-bucket"
+			"bucket_name": "images"
 		},
 		{
 			"binding": "PDFS_BUCKET",
-			"bucket_name": "onechat-pdfs-bucket"
+			"bucket_name": "pdfs"
 		}
 	],
 	"durable_objects": {

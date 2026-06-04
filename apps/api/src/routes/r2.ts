@@ -15,12 +15,12 @@ router.post("/", async (c) => {
       return c.json({ message: "Invalid Inputs"}, 400);
     }
 
-    const { key, type, size, name } = body;
-    if(type !== "image" && type !== "pdf") {
+    const { type, size, name } = body;
+    if(!type.startsWith("image/") && !type.startsWith("application/pdf")) {
         return c.json({ message: 'Invalid type' }, 400)
     }
 
-    if(size > 10 * 1024 * 1024) {
+    if(parseInt(size) > 10 * 1024 * 1024) {
       return c.json({ message: "File Size greater than 10MB"}, 400);
     }
 
@@ -29,9 +29,9 @@ router.post("/", async (c) => {
         secretAccessKey: c.env.R2_SECRET_ACCESS_KEY
     });
 
-    const bucketName = type === "image" ? "images" : "pdfs";
-
-    const url = new URL(`https://<ACCOUNT_ID>.r2.cloudflarestorage.com/${bucketName}/${encodeURIComponent(key)}`);
+    const bucketName = type.startsWith("image/") ? "images" : "pdfs";
+    
+    const url = new URL(`https://eb1a6f98801704703718c6f15f618707.r2.cloudflarestorage.com/${bucketName}/${encodeURIComponent(name)}`);
     url.searchParams.set("X-Amz-Expires", "3600");
 
     const signed = await r2.sign(
