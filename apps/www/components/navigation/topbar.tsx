@@ -27,10 +27,12 @@ import {
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import { Input } from "@workspace/ui/components/input";
+import { useChatStore } from "@/store/useChat";
 
 export function Topbar() {
   const { id } = useParams();
   const router = useRouter();
+  const { setMessages } = useChatStore();
   const [loading, setLoading] = useState(false);
   const [shareLink, setshareLink] = useState<string>("");
 
@@ -46,6 +48,7 @@ export function Topbar() {
       );
       const data = await response.json();
       router.push("/");
+      setMessages([]);
     } catch (error) {
       console.log("ERROR in TOPBAR", error);
     } finally {

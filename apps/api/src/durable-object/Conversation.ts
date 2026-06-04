@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import {
   ImageSchema,
+  InsertIntoImage,
   InsertIntoMessage,
   MessageSchema,
   PDFSchema,
@@ -17,6 +18,7 @@ import {
   WebSocketStreamAIResponse,
   WebSocketTitleGeneratedMessage,
 } from "@workspace/types";
+import { toBase64 } from "@/utils";
 
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
@@ -67,7 +69,9 @@ export class Conversation extends DurableObject<Env> {
     ws: WebSocket,
     message: WebSocketCreateStreamMessage,
   ) {
-    const { eventId, conversationId, content, model, role } = message;
+    const { eventId, conversationId, content, model, role, objects } = message;
+    const provider = model.split("/")[0];
+
     this.messages = [...this.messages, { role, content }];
     this.abortController = new AbortController();
 
@@ -81,11 +85,62 @@ export class Conversation extends DurableObject<Env> {
       Date.now(),
     );
 
+    // only supports images as of now.
+    const contentBlock = [];
+
+    if (objects && objects.length > 0) {
+      for (const obj of objects) {
+        if (!obj.type.startsWith("image/")) continue;
+
+        const object = await this.env.IMAGES_BUCKET.get(encodeURIComponent(obj.name));
+        if (!object) continue;
+
+        this.ctx.storage.sql.exec(
+          InsertIntoImage,
+          crypto.randomUUID(),
+          encodeURIComponent(obj.name),
+          obj.size,
+          userMessageId,
+          new Date(),
+        );
+
+        const buffer = await object.arrayBuffer();
+        const base64 = toBase64(buffer);
+
+        switch (provider) {
+          case "anthropic":
+            contentBlock.push({
+              type: "image",
+              source: { type: "base64", media_type: obj.type, data: base64 },
+            });
+            break;
+          case "google":
+            contentBlock.push({
+              inlineData: { mimeType: obj.type, data: base64 },
+            });
+            break;
+          default:
+            contentBlock.push({
+              type: "image_url",
+              image_url: { url: `data:${obj.type};base64,${base64}` },
+            });
+            break;
+        }
+      }
+    }
+    contentBlock.push({ type: "text", text: content });
+
     try {
       const stream = (await this.env.AI.run(
         model,
         {
-          messages: this.messages,
+          messages: [
+            ...this.messages.slice(0, -1),
+            {
+              role,
+              content: contentBlock,
+            },
+          ],
           stream: true,
         },
         {
@@ -162,7 +217,9 @@ export class Conversation extends DurableObject<Env> {
       }
 
       if (this.messages.length === 2) {
-        const firstUserMessage = this.messages.find((x) => x.role === Role.User)?.content;
+        const firstUserMessage = this.messages.find(
+          (x) => x.role === Role.User,
+        )?.content;
         const response = (await this.env.AI.run(
           "@cf/meta/llama-3.2-3b-instruct",
           {
@@ -170,7 +227,7 @@ export class Conversation extends DurableObject<Env> {
               {
                 role: "system",
                 content:
-                 "You are a title generator. You output only 3-5 words. Nothing else. No punctuation. No quotes. No labels.", 
+                  "You are a title generator. You output only 3-5 words. Nothing else. No punctuation. No quotes. No labels.",
               },
               {
                 role: "user",
@@ -189,8 +246,8 @@ export class Conversation extends DurableObject<Env> {
           type: "chat.title.generated",
           conversationId,
           eventId,
-          title
-        } 
+          title,
+        };
         ws.send(JSON.stringify(titleGeneratedEvent));
       }
     } catch (error) {
@@ -238,4 +295,3 @@ export class Conversation extends DurableObject<Env> {
     await this.ctx.storage.deleteAll();
   }
 }
-

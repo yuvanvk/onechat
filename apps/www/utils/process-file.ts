@@ -69,9 +69,9 @@ export async function processFiles(
   );
 }
 
-// 1. user uploads them as file comes we get preSignedUrl
-// 2. Then upload them to R2 and update status uploading (spinner)
-// 3. Get the data back and render it in the chatbox
+// 1. user uploads them as file comes we get preSignedUrl ✅
+// 2. Then upload them to R2 and update status uploading (spinner) ✅
+// 3. Get the data back and render it in the chatbox ✅
 // 4. when pressed enter the content along with file keys goes to backend.
 // 5. and using those keys we upload the data in respective database table
 // 6. convert to base64 according AI model and stream the response back.

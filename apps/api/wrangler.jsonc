@@ -21,11 +21,13 @@
 	"r2_buckets": [
 		{
 			"binding": "IMAGES_BUCKET",
-			"bucket_name": "images"
+			"bucket_name": "images",
+			"remote": true
 		},
 		{
 			"binding": "PDFS_BUCKET",
-			"bucket_name": "pdfs"
+			"bucket_name": "pdfs",
+			"remote": true
 		}
 	],
 	"durable_objects": {

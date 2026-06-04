@@ -2,19 +2,19 @@
 
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Role, WebSocketCreateStreamMessage } from "@workspace/types";
 import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
+import { useSocket } from "@/hooks/useSocket";
 import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
-import { useSocket } from "@/hooks/useSocket";
-import { useParams, useRouter } from "next/navigation";
 import { uploadToBucket } from "@/utils/upload-to-bucket";
+import { Role, WebSocketCreateStreamMessage } from "@workspace/types";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 
 export const ChatInput = () => {
   const { id } = useParams();
@@ -35,7 +35,9 @@ export const ChatInput = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { send } = useSocket(conversationId as string);
+
   const hasInput = useMemo(() => input.length > 0, [input]);
+  const objects = useMemo(() => attachments.map((a) => ({ name: a.name, type: a.type, size: a.size })), [attachments]);
 
   const fileMapRef = useRef<Record<string, File>>({});
 
@@ -154,12 +156,14 @@ export const ChatInput = () => {
   async function handleAIResponse() {
     const content = input;
     setInput("");
+    setAttachments([]);
     let activeId = id as string;
 
     if (!activeId) {
       const response = await fetch("http://localhost:8787/api/v1/ai/create", {
         method: "POST",
       });
+
       const { data } = await response.json();
       activeId = data.conversationId;
       setConversationId(activeId);
@@ -169,6 +173,7 @@ export const ChatInput = () => {
         role: Role.User,
         content,
         conversationId: activeId,
+        objects,
         model: "@cf/moonshotai/kimi-k2.6",
       });
       addMessage({
@@ -204,6 +209,7 @@ export const ChatInput = () => {
         content,
         conversationId: activeId,
         model: "@cf/moonshotai/kimi-k2.6",
+        objects,
       };
       send(createMessage);
     } catch (error) {

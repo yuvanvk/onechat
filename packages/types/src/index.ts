@@ -4,6 +4,7 @@ export type WebSocketCreateStreamMessage = {
   role: Role.User;
   model: string;
   content: string;
+  objects?: { name: string; type: string; size: number }[];
   conversationId: string;
 };
 
