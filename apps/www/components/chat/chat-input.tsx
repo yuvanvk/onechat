@@ -2,27 +2,31 @@
 
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import {
-  Role,
-  WebSocketCreateStreamMessage,
-} from "@workspace/types";
+import { Role, WebSocketCreateStreamMessage } from "@workspace/types";
 import { Paperclip } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
 import { useSocket } from "@/hooks/useSocket";
 import { useParams, useRouter } from "next/navigation";
+import { uploadToBucket } from "@/utils/upload-to-bucket";
 
 export const ChatInput = () => {
   const { id } = useParams();
   const router = useRouter();
 
-  const { addMessage, pendingMessage, conversationId, setConversationId, setPendingMessage } = useChatStore();
+  const {
+    addMessage,
+    pendingMessage,
+    conversationId,
+    setConversationId,
+    setPendingMessage,
+  } = useChatStore();
 
   const [input, setInput] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -31,10 +35,50 @@ export const ChatInput = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { send } = useSocket(conversationId as string);
-  const hasInput = input.length > 0;
+  const hasInput = useMemo(() => input.length > 0, [input]);
+
+  const fileMapRef = useRef<Record<string, File>>({});
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
     setInput(e.target.value);
+  }
+
+  function handleAdd(attachment: Attachment, File: File) {
+    setAttachments((p) => [...p, attachment]);
+    fileMapRef.current[attachment.name] = File;
+  }
+
+  function handleUpdate(fileName: string, patch: Partial<Attachment>) {
+    setAttachments((p) =>
+      p.map((x) => (x.name === fileName ? { ...x, ...patch } : x)),
+    );
+  }
+
+  function removeFile(fileName: string) {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.name == fileName);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((a) => a.name != fileName);
+
+      // also send a request to delete the file from the bucket if needed
+    });
+  }
+
+  async function handleReUploadFile(fileName: string): Promise<void> {
+    const file = fileMapRef.current[fileName];
+    if (!file) {
+      toast.error("File not found");
+      return
+    } 
+    handleUpdate(file.name, { status: "uploading" });
+    try {
+      await uploadToBucket(file);
+      handleUpdate(file.name, { status: "success"});
+    } catch (error) {
+      handleUpdate(file.name, { status: "error"});
+      toast.error("Failed to Upload file.")
+    }
+
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -42,7 +86,8 @@ export const ChatInput = () => {
 
     processFiles(
       Array.from(e.target.files),
-      (a) => setAttachments((p) => [...p, a]),
+      handleAdd,
+      handleUpdate,
       (msg) => toast.error(msg),
     );
     e.target.value = "";
@@ -62,6 +107,7 @@ export const ChatInput = () => {
     processFiles(
       images,
       (a) => setAttachments((p) => [...p, a]),
+      (fileName, patch) => setAttachments((p) => p.map(x => x.name === fileName ? {...x, ...patch} : x)),
       (msg) => toast.error(msg),
     );
   }
@@ -87,34 +133,26 @@ export const ChatInput = () => {
     processFiles(
       Array.from(e.dataTransfer.files),
       (a) => setAttachments((p) => [...p, a]),
+      (fileName, patch) => setAttachments((p) => p.map(x => x.name === fileName ? {...x, ...patch} : x)),
       (msg) => toast.error(msg),
     );
   }
 
-  function removeFile(id: string) {
-    setAttachments((prev) => {
-      const target = prev.find((a) => a.id == id);
-      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((a) => a.id != id);
-    });
-  }
-
   useEffect(() => {
-    if(!pendingMessage || !id) return;
+    if (!pendingMessage || !id) return;
     const messageToSend = pendingMessage;
     try {
       send(messageToSend);
-      setPendingMessage(null)
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        }
-      } 
+      setPendingMessage(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
   }, [pendingMessage, id, send]);
 
   async function handleAIResponse() {
-    
-    const content = input
+    const content = input;
     setInput("");
     let activeId = id as string;
 
@@ -131,8 +169,8 @@ export const ChatInput = () => {
         role: Role.User,
         content,
         conversationId: activeId,
-        model: "@cf/moonshotai/kimi-k2.6"
-      })
+        model: "@cf/moonshotai/kimi-k2.6",
+      });
       addMessage({
         id: "new-user-message",
         role: "user" as Role,
@@ -191,12 +229,14 @@ export const ChatInput = () => {
       )}
     >
       {attachments.length > 0 && (
-        <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-4 mb-3 flex-wrap">
           {attachments.map((attachment) => (
             <AttachmentChip
+            key={attachment.id}
               file={attachment}
-              key={attachment.id}
-              onRemove={() => removeFile(attachment.id)}
+              // originalFile={fileMapRef.current[attachment.name]}
+              handleReUploadFile={handleReUploadFile}
+              onRemove={() => removeFile(attachment.name)}
             />
           ))}
         </div>
