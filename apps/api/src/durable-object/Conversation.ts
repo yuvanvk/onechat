@@ -33,7 +33,7 @@ export class Conversation extends DurableObject<Env> {
 
       this.messages = this.ctx.storage.sql
         .exec(QueryMessages)
-        .toArray() as Message[];
+        .toArray() as unknown as Message[];
     });
     this.abortController = new AbortController();
   }
@@ -72,10 +72,19 @@ export class Conversation extends DurableObject<Env> {
     const { eventId, conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];
 
-    this.messages = [...this.messages, { role, content }];
+    const userMessageId = crypto.randomUUID();
+    let currentUserMessage: Message = {
+      id: userMessageId,
+      role,
+      model,
+      content,
+      pdfs: [],
+      images: [],
+    };
+
+    this.messages = [...this.messages, currentUserMessage];
     this.abortController = new AbortController();
 
-    const userMessageId = crypto.randomUUID();
     this.ctx.storage.sql.exec(
       InsertIntoMessage,
       userMessageId,
@@ -92,8 +101,13 @@ export class Conversation extends DurableObject<Env> {
       for (const obj of objects) {
         if (!obj.type.startsWith("image/")) continue;
 
-        const object = await this.env.IMAGES_BUCKET.get(encodeURIComponent(obj.name));
-        if (!object) continue;
+        const object = await this.env.IMAGES_BUCKET.get(
+          encodeURIComponent(obj.name),
+        );
+
+        if (!object) {
+          continue;
+        }
 
         this.ctx.storage.sql.exec(
           InsertIntoImage,
@@ -102,6 +116,17 @@ export class Conversation extends DurableObject<Env> {
           obj.size,
           userMessageId,
           new Date(),
+        );
+        this.messages = this.messages.map((message) =>
+          message.id === userMessageId
+            ? {
+                ...message,
+                images: [
+                  ...(message.images ?? []),
+                  { name: obj.name, size: obj.size, type: obj.type },
+                ],
+              }
+            : message,
         );
 
         const buffer = await object.arrayBuffer();
@@ -295,3 +320,11 @@ export class Conversation extends DurableObject<Env> {
     await this.ctx.storage.deleteAll();
   }
 }
+
+// {
+//    id: sdkasdksdk,
+//    role: "user",
+//    content: textual
+//    object: render on top (images, pdf's)
+// }
+
