@@ -16,11 +16,25 @@ export type WebSocketCancelMessage = {
 
 export type WebSocketRegenerateStreamMessage = {
   type: "chat.stream.regenerate";
-  eventId: string;
   messageId: string;
+  content: string;
   conversationId: string;
   model: string;
 };
+
+export type WebSocketStreamRegenerteResponse = {
+  type: "chat.regenerate.response";
+  messageId: string;
+  role: Role.Assistant;
+  content: string;
+  conversationId: string;
+}
+
+export type WebSocketRegenerateResponseDone = {
+  type: "chat.regenerate.done";
+  messageId: string;
+  conversationId: string;
+}
 
 export type WebSocketStreamAIResponse = {
   type: "chat.stream.response";
@@ -54,7 +68,9 @@ export type WebSocketClientMessage =
 export type WebSocketServerMessage =
   | WebSocketStreamAIResponse
   | WebSocketStreamAIDone
-  | WebSocketTitleGeneratedMessage;
+  | WebSocketTitleGeneratedMessage
+  | WebSocketStreamRegenerteResponse
+  | WebSocketRegenerateResponseDone;
 
 
 export type Message = {

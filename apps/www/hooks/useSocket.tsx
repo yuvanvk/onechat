@@ -10,7 +10,7 @@ import { useConversationStore } from "@/store/useConversation";
 
 export function useSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
-  const { updateMessage } = useChatStore();
+  const { updateMessage, setRegeneratedMessage } = useChatStore();
   const { setTitle } = useConversationStore();
 
   useEffect(() => {
@@ -26,6 +26,9 @@ export function useSocket(conversationId: string) {
       switch (parsed.type) {
         case "chat.stream.response":
           updateMessage({ token: parsed.content });
+          break;
+        case "chat.regenerate.response":
+          setRegeneratedMessage(parsed.messageId, parsed.content);
           break;
         case "chat.title.generated":
           setTitle(parsed.title, parsed.conversationId);

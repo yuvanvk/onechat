@@ -7,15 +7,18 @@ import {
   PDFSchema,
   QueryMessages,
   UpdateConversationTitle,
+  UpdateMessageContent,
 } from "./sql";
 import {
   Message,
   Role,
   WebSocketClientMessage,
   WebSocketCreateStreamMessage,
+  WebSocketRegenerateResponseDone,
   WebSocketRegenerateStreamMessage,
   WebSocketStreamAIDone,
   WebSocketStreamAIResponse,
+  WebSocketStreamRegenerteResponse,
   WebSocketTitleGeneratedMessage,
 } from "@workspace/types";
 import { toBase64 } from "@/utils";
@@ -293,23 +296,96 @@ export class Conversation extends DurableObject<Env> {
     message: WebSocketRegenerateStreamMessage,
   ) {
     this.abortController = new AbortController();
-    const result = this.ctx.storage.sql.exec(
-      "SELECT content FROM messages WHERE id = ?",
-      [message.messageId],
-    );
+    const { messageId, model, content, conversationId } = message;
 
-    const regenerateStream = await this.env.AI.run(
-      message.model,
-      {
-        prompt:
-          result +
-          "For the above text regenerate it properly with exact context of matter",
-        stream: true,
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+    const messageIndex = this.messages.findIndex((m) => m.id === messageId);
+    const historyUpToMessage = this.messages.slice(0, messageIndex);
+
+    try {
+      const stream = (await this.env.AI.run(
+        model,
+        {
+          messages: [
+            ...historyUpToMessage,
+            {
+              role: "user",
+              content:
+                content +
+                "<SystemPrompt>Please regenerate an alternative answer for this content, with different wording and more detail.</SystemPrompt>",
+            },
+          ],
+          stream: true,
+        },
+        { signal: this.abortController.signal },
+      )) as unknown as ReadableStream;
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullContent = "";
+      let isDone = false;
+
+      while (true) {
+
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          if (event.includes("data: [DONE]")) {
+            isDone = true;
+            continue;
+          }
+
+          const dataLine = event
+            .split("\n")
+            .find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+
+          const json = JSON.parse(dataLine.slice(6));
+
+          const token =
+            json.response ?? json.choices?.[0]?.delta?.content ?? "";
+
+          if (token) {
+            fullContent += token;
+            const regenerateStreamMessage: WebSocketStreamRegenerteResponse = {
+              type: "chat.regenerate.response",
+              role: "assistant" as Role.Assistant,
+              messageId,
+              content: token as string,
+              conversationId,
+            };
+
+            ws.send(JSON.stringify(regenerateStreamMessage));
+          }
+        }
+      }
+      if (isDone) {
+        console.log("doneeeee");
+
+        const regenerateStreamDoneMessage: WebSocketRegenerateResponseDone = {
+          type: "chat.regenerate.done",
+          messageId,
+          conversationId,
+        };
+
+        this.messages = this.messages.map((message) =>
+          message.role === "assistant" && message.id === messageId
+            ? { ...message, content: fullContent }
+            : message,
+        );
+
+        this.ctx.storage.sql.exec(UpdateMessageContent, fullContent, messageId);
+        ws.send(JSON.stringify(regenerateStreamDoneMessage));
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async getMessages() {
@@ -320,11 +396,3 @@ export class Conversation extends DurableObject<Env> {
     await this.ctx.storage.deleteAll();
   }
 }
-
-// {
-//    id: sdkasdksdk,
-//    role: "user",
-//    content: textual
-//    object: render on top (images, pdf's)
-// }
-

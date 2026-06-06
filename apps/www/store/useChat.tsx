@@ -14,6 +14,8 @@ interface ChatStore {
     setId?: string;
   }) => void;
   setConversationId: (conversationId: string) => void;
+  setRegeneratedMessage: (messageId: string, token: string) => void;
+  setMessageEmpty: (messageId: string) => void;
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -37,5 +39,20 @@ export const useChatStore = create<ChatStore>((set, get) => ({
               msg.id === id ? { ...msg, id: setId } : msg,
             )
           : get().messages,
+    }),
+  setRegeneratedMessage: (messageId, token) =>
+    set({
+      messages: get().messages.map((message) =>
+        message.role === "assistant" && message.id === messageId
+          ? { ...message, content: message.content + token }
+          : message,
+      ),
+    }),
+
+  setMessageEmpty: (messageId) =>
+    set({
+      messages: get().messages.map((message) =>
+        message.id === messageId ? { ...message, content: "" } : message,
+      ),
     }),
 }));

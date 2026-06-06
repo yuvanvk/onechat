@@ -36,7 +36,7 @@ export const ChatInput = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { send } = useSocket(conversationId as string);
 
-  const hasInput = useMemo(() => input.length > 0, [input]);
+  const hasInput = useMemo(() => input.length > 0 || attachments.length > 0, [input, attachments]);
   const objects = useMemo(() => attachments.map((a) => ({ name: a.name, type: a.type, size: a.size })), [attachments]);
 
   const fileMapRef = useRef<Record<string, File>>({});
@@ -298,7 +298,7 @@ export const ChatInput = () => {
             className={cn(" rounded-full")}
           >
             <motion.div
-              animate={{ rotate: input ? "-90deg" : "0deg" }}
+              animate={{ rotate: hasInput ? "-90deg" : "0deg" }}
               transition={{
                 type: "spring",
                 damping: 13,

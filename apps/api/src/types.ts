@@ -1,6 +1,6 @@
 import { auth } from "@workspace/better-auth/server"
 import { getDB } from "@workspace/db"
-import { Conversation } from "./durable-object/Conversation"
+import { Conversation } from "./durable-object/Conversation.1";
 
 export type Bindings = {
     D1_DATABASE: D1Database,

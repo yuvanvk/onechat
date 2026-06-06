@@ -56,3 +56,4 @@ export const QueryMessages = `
 export const InsertIntoMessage = `INSERT INTO messages (id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?)`;
 export const UpdateConversationTitle = `UPDATE conversation SET title = ? WHERE id = ?`;
 export const InsertIntoImage = `INSERT INTO images (id, name, size, message_id, created_at) VALUES (?, ?, ?, ?, ?)`;
+export const UpdateMessageContent = `UPDATE messages SET content = ? WHERE id = ?`;

@@ -3,11 +3,14 @@
 import Image from "next/image";
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Message } from "@workspace/types";
+import { Message, WebSocketClientMessage, WebSocketRegenerateStreamMessage } from "@workspace/types";
 import ReactMarkdown from "react-markdown";
 import { Copy, RotateCcw } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
+import { useSocket } from "@/hooks/useSocket";
+import { useParams } from "next/navigation";
+import { useChatStore } from "@/store/useChat";
 
 const PROSE_CLASSES = `
   prose prose-invert prose-neutral max-w-none
@@ -44,8 +47,10 @@ function ThinkingIndicator() {
 function MessageActions({
   onCopy,
   showRegenerate,
+  onRegenerate
 }: {
   onCopy: () => void;
+  onRegenerate?: () => Promise<void>;
   showRegenerate?: boolean;
 }) {
   return (
@@ -54,7 +59,7 @@ function MessageActions({
         <Copy />
       </Button>
       {showRegenerate && (
-        <Button size="icon-xs" variant="ghost">
+        <Button size="icon-xs" variant="ghost" onClick={onRegenerate}>
           <RotateCcw />
         </Button>
       )}
@@ -62,8 +67,11 @@ function MessageActions({
   );
 }
 
-export function MessageCard({ content, role, images, pdfs }: Message) {
+export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonshotai/kimi-k2.6" }: Message) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const { conversationId, setMessageEmpty } = useChatStore();
+  const { send } = useSocket(conversationId as string);
+
   const isUser = role === "user";
 
   async function handleCopy() {
@@ -73,6 +81,21 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
     } catch (error) {
       console.error("Failed to copy:", error);
     }
+  }
+
+  async function handleRegenerate() {
+    console.log("inside re-gen");
+    setMessageEmpty(id!);
+    const regenerateMessage: WebSocketRegenerateStreamMessage = {
+      type: "chat.stream.regenerate",
+      messageId: id as string,
+      content,
+      conversationId,
+      model,
+    }
+    send(regenerateMessage);
+    console.log("processed");
+    
   }
 
   return (
@@ -120,7 +143,7 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
         className={cn(
           "text-neutral-100 text-[15px]",
           isUser
-            ? "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto"
+            ? content && "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto"
             : "max-w-2xl w-full p-1.5 mr-auto",
         )}
       >
@@ -139,7 +162,7 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
       </motion.div>
 
       {/* Actions */}
-      {isUser && (
+      {isUser && content && (
         <motion.div
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
@@ -150,7 +173,7 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
       )}
 
       {!isUser && content && (
-        <MessageActions onCopy={handleCopy} showRegenerate />
+        <MessageActions onCopy={handleCopy} onRegenerate={handleRegenerate} showRegenerate />
       )}
     </div>
   );
