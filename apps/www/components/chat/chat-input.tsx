@@ -70,27 +70,23 @@ export const ChatInput = () => {
     const file = fileMapRef.current[fileName];
     if (!file) {
       toast.error("File not found");
-      return
-    } 
+      return;
+    }
     handleUpdate(file.name, { status: "uploading" });
     try {
       await uploadToBucket(file);
-      handleUpdate(file.name, { status: "success"});
+      handleUpdate(file.name, { status: "success" });
     } catch (error) {
-      handleUpdate(file.name, { status: "error"});
-      toast.error("Failed to Upload file.")
+      handleUpdate(file.name, { status: "error" });
+      toast.error("Failed to Upload file.");
     }
-
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
 
-    processFiles(
-      Array.from(e.target.files),
-      handleAdd,
-      handleUpdate,
-      (msg) => toast.error(msg),
+    processFiles(Array.from(e.target.files), handleAdd, handleUpdate, (msg) =>
+      toast.error(msg),
     );
     e.target.value = "";
   }
@@ -109,7 +105,10 @@ export const ChatInput = () => {
     processFiles(
       images,
       (a) => setAttachments((p) => [...p, a]),
-      (fileName, patch) => setAttachments((p) => p.map(x => x.name === fileName ? {...x, ...patch} : x)),
+      (fileName, patch) =>
+        setAttachments((p) =>
+          p.map((x) => (x.name === fileName ? { ...x, ...patch } : x)),
+        ),
       (msg) => toast.error(msg),
     );
   }
@@ -135,7 +134,10 @@ export const ChatInput = () => {
     processFiles(
       Array.from(e.dataTransfer.files),
       (a) => setAttachments((p) => [...p, a]),
-      (fileName, patch) => setAttachments((p) => p.map(x => x.name === fileName ? {...x, ...patch} : x)),
+      (fileName, patch) =>
+        setAttachments((p) =>
+          p.map((x) => (x.name === fileName ? { ...x, ...patch } : x)),
+        ),
       (msg) => toast.error(msg),
     );
   }
@@ -180,6 +182,9 @@ export const ChatInput = () => {
         id: "new-user-message",
         role: "user" as Role,
         content,
+        images: attachments
+          .filter((a) => a.type.startsWith("image/"))
+          .map((a) => ({ name: a.name, size: a.size, type: a.type })),
       });
       addMessage({
         id: "new-ai-message",
@@ -193,6 +198,9 @@ export const ChatInput = () => {
       id: "new-user-message",
       role: "user" as Role,
       content: content,
+      images: attachments
+        .filter((a) => a.type.startsWith("image/"))
+        .map((a) => ({ name: a.name, size: a.size, type: a.type })),
     });
 
     addMessage({
@@ -238,7 +246,7 @@ export const ChatInput = () => {
         <div className="flex items-center gap-4 mb-3 flex-wrap">
           {attachments.map((attachment) => (
             <AttachmentChip
-            key={attachment.id}
+              key={attachment.id}
               file={attachment}
               // originalFile={fileMapRef.current[attachment.name]}
               handleReUploadFile={handleReUploadFile}
