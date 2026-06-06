@@ -59,6 +59,9 @@ export type Message = {
   id?: string
   role: Role;
   content: string;
+  model?: string;
+  pdfs?: { name: string; type: string; size: number }[];
+  images?: { name: string; type: string; size: number }[];
 };
 
 export type Conversation = {
