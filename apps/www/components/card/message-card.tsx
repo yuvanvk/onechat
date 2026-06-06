@@ -82,9 +82,8 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
         <div className="flex items-center gap-2 justify-end flex-wrap">
           {images.map((image) => {
             return (
-              <>
+              <div key={image.name}>
                 <Image
-                  key={image.name}
                   src={getImageUrl(image.name)}
                   alt={image.name}
                   width={150}
@@ -107,7 +106,7 @@ export function MessageCard({ content, role, images, pdfs }: Message) {
                     />
                   </div>
                 )}
-              </>
+              </div>
             );
           })}
         </div>

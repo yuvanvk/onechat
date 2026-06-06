@@ -31,6 +31,8 @@ export function useSocket(conversationId: string) {
           setTitle(parsed.title, parsed.conversationId);
           break;
         case "chat.stream.done":
+          updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
+          updateMessage({ id: "new-ai-message", setId: parsed.aiMessageId });
           break;
       }
     };

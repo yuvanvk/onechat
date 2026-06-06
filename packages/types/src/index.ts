@@ -34,6 +34,8 @@ export type WebSocketStreamAIDone = {
   type: "chat.stream.done";
   eventId: string;
   conversationId: string;
+  userMessageId?: string;
+  aiMessageId?: string;
 };
 
 export type WebSocketTitleGeneratedMessage = {

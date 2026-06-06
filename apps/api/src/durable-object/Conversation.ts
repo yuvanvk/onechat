@@ -101,9 +101,7 @@ export class Conversation extends DurableObject<Env> {
       for (const obj of objects) {
         if (!obj.type.startsWith("image/")) continue;
 
-        const object = await this.env.IMAGES_BUCKET.get(
-          encodeURIComponent(obj.name),
-        );
+        const object = await this.env.IMAGES_BUCKET.get(obj.name);
 
         if (!object) {
           continue;
@@ -112,10 +110,10 @@ export class Conversation extends DurableObject<Env> {
         this.ctx.storage.sql.exec(
           InsertIntoImage,
           crypto.randomUUID(),
-          encodeURIComponent(obj.name),
+          obj.name,
           obj.size,
           userMessageId,
-          new Date(),
+          Date.now(),
         );
         this.messages = this.messages.map((message) =>
           message.id === userMessageId
@@ -218,10 +216,13 @@ export class Conversation extends DurableObject<Env> {
         }
       }
       if (isDone) {
+        const aiMessageId = crypto.randomUUID();
         const streamDoneMessage: WebSocketStreamAIDone = {
           type: "chat.stream.done",
           eventId,
           conversationId,
+          userMessageId,
+          aiMessageId,
         };
 
         this.messages = [
@@ -231,7 +232,7 @@ export class Conversation extends DurableObject<Env> {
 
         this.ctx.storage.sql.exec(
           InsertIntoMessage,
-          crypto.randomUUID(),
+          aiMessageId,
           Role.Assistant,
           fullContent,
           model,
