@@ -154,7 +154,6 @@ export class Conversation extends DurableObject<Env> {
       }
     }
     contentBlock.push({ type: "text", text: content });
-
     try {
       const stream = (await this.env.AI.run(
         model,
