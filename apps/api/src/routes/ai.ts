@@ -44,7 +44,7 @@ router.get("/conversations/:conversationId", async (c) => {
   const stub = c.env.CONVERSATION.get(id);
 
   const messages = await stub.getMessages();
-
+  
   if (!messages) {
     return c.json(
       { message: "No Messages found", data: { messages: [] } },

@@ -47,4 +47,20 @@ router.post("/", async (c) => {
   }  
 });
 
+router.get("/images/:key", async (c) => {
+    const key = c.req.param("key");
+    const object = await c.env.IMAGES_BUCKET.get(key);
+    
+    if(!object) {
+        return c.json({ message: "Not found" }, 404);
+    }
+
+    return new Response(object.body, {
+    headers: { 
+      'Content-Type': object.httpMetadata?.contentType ?? 'image/png',
+      'Cache-Control': 'public, max-age=31536000',
+    }
+  });
+});
+
 export default router;
