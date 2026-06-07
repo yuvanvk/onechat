@@ -72,12 +72,13 @@ router.post("/create", async (c) => {
 router.get("/chat", async (c) => {
   try {
     const db = c.get("db");
-
     let { conversationId } = c.req.query();
 
     if (!conversationId) {
       return c.json({ message: "Conversation id is required" }, 400);
     }
+    // check for credits
+    
 
     const existing = await db.query.conversation.findFirst({
       where: eq(conversation.id, conversationId),

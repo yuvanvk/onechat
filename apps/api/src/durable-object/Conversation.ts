@@ -170,6 +170,7 @@ export class Conversation extends DurableObject<Env> {
         },
         {
           signal: this.abortController.signal,
+          gateway: { id: "onechat" },
         },
       )) as unknown as ReadableStream;
 
@@ -316,7 +317,7 @@ export class Conversation extends DurableObject<Env> {
           ],
           stream: true,
         },
-        { signal: this.abortController.signal },
+        { signal: this.abortController.signal, gateway: { id: "onechat" }},
       )) as unknown as ReadableStream;
 
       const reader = stream.getReader();
