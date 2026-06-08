@@ -8,24 +8,24 @@ import { useChatStore } from "@/store/useChat";
 import { useMessage } from "@/hooks/useMessges";
 import { Topbar } from "@/components/navigation/topbar";
 import { MessageCard } from "@/components/card/message-card";
+import { useConversationStore } from "@/store/useConversation";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
-import { useConversationStore } from "@/store/useConversation";
 
 export const Chat = () => {
   const { id } = useParams();
   const { messages, setConversationId } = useChatStore();
   const { fetch } = useConversationStore();
-  const { isLoading, error } = useMessage(id as string);  
+  const { isLoading, error } = useMessage(id as string);
 
   useEffect(() => {
-    if(id) {
+    if (id) {
       setConversationId(id as string);
     }
     fetch();
-  }, [id])
-  
-  if(error) {
+  }, [id]);
+
+  if (error) {
     toast.error(error);
   }
 
@@ -33,21 +33,28 @@ export const Chat = () => {
     <div className="flex flex-col min-h-screen w-full bg-[#080808] h-full">
       <Topbar />
       {id && (
-        <ScrollArea   className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-3 pb-27.5 h-full flex flex-col">
+        <ScrollArea className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-3 pb-27.5 h-full flex flex-col">
           {isLoading ? (
             <ChatSkeleton />
           ) : (
             <>
-              {messages.length > 0 && messages.map((message, idx) => (
-                <MessageCard
-                  id={message.id}
-                  key={idx}
-                  content={message.content}
-                  role={message.role}
-                  images={typeof message.images === "string" ? JSON.parse(message.images as unknown as string).filter(Boolean) : message.images}
-                  pdfs={message.pdfs}
-                />
-              ))}
+              {messages.length > 0 &&
+                messages.map((message, idx) => (
+                  <MessageCard
+                    id={message.id}
+                    key={idx}
+                    content={message.content}
+                    role={message.role}
+                    images={
+                      typeof message.images === "string"
+                        ? JSON.parse(
+                            message.images as unknown as string,
+                          ).filter(Boolean)
+                        : message.images
+                    }
+                    pdfs={message.pdfs}
+                  />
+                ))}
             </>
           )}
         </ScrollArea>
