@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { motion } from "motion/react";
-import { Message, WebSocketClientMessage, WebSocketRegenerateStreamMessage } from "@workspace/types";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  Message,
+  WebSocketClientMessage,
+  WebSocketRegenerateStreamMessage,
+} from "@workspace/types";
 import ReactMarkdown from "react-markdown";
 import { Copy, RotateCcw } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
@@ -47,7 +51,7 @@ function ThinkingIndicator() {
 function MessageActions({
   onCopy,
   showRegenerate,
-  onRegenerate
+  onRegenerate,
 }: {
   onCopy: () => void;
   onRegenerate?: () => Promise<void>;
@@ -67,7 +71,14 @@ function MessageActions({
   );
 }
 
-export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonshotai/kimi-k2.6" }: Message) {
+export function MessageCard({
+  id,
+  content,
+  role,
+  images,
+  pdfs,
+  model = "@cf/moonshotai/kimi-k2.6",
+}: Message) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { conversationId, setMessageEmpty } = useChatStore();
   const { send } = useSocket(conversationId as string);
@@ -92,10 +103,9 @@ export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonsh
       content,
       conversationId,
       model,
-    }
+    };
     send(regenerateMessage);
     console.log("processed");
-    
   }
 
   return (
@@ -116,19 +126,25 @@ export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonsh
                   onClick={() => setPreviewImage(getImageUrl(image.name))}
                   className="object-cover rounded-lg cursor-pointer"
                 />
-                {previewImage && (
-                  <div
-                    onClick={() => setPreviewImage(null)}
-                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
-                  >
-                    <img
-                      src={previewImage}
-                      alt="preview"
-                      className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
+                <AnimatePresence>
+                  {previewImage && (
+                    <motion.div
+                      initial={{ opacity: 0, filter: "blur(10px)" }}
+                      animate={{ opacity: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, filter: "blur(10px)" }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      onClick={() => setPreviewImage(null)}
+                      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+                    >
+                      <img
+                        src={previewImage}
+                        alt="preview"
+                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
@@ -143,7 +159,8 @@ export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonsh
         className={cn(
           "text-neutral-100 text-[15px]",
           isUser
-            ? content && "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto"
+            ? content &&
+                "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto"
             : "max-w-2xl w-full p-1.5 mr-auto",
         )}
       >
@@ -173,7 +190,11 @@ export function MessageCard({ id, content, role, images, pdfs, model="@cf/moonsh
       )}
 
       {!isUser && content && (
-        <MessageActions onCopy={handleCopy} onRegenerate={handleRegenerate} showRegenerate />
+        <MessageActions
+          onCopy={handleCopy}
+          onRegenerate={handleRegenerate}
+          showRegenerate
+        />
       )}
     </div>
   );
