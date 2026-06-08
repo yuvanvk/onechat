@@ -49,6 +49,8 @@ export default function SharedConversationPage() {
                   <MessageCard
                     key={idx}
                     content={message.content}
+                    images={JSON.parse(message.images as unknown as string).filter(Boolean)}
+                    pdfs={message.pdfs}
                     role={message.role}
                   />
                 ))}
