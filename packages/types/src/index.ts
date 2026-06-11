@@ -59,6 +59,13 @@ export type WebSocketTitleGeneratedMessage = {
   conversationId: string; 
 }
 
+export type WebSocketErrorMessage = {
+  type: "chat.stream.error",
+  eventId: string,
+  conversationId: string,
+  message: string
+}
+
 export type WebSocketClientMessage =
   | WebSocketCreateStreamMessage
   | WebSocketCancelMessage
@@ -70,7 +77,8 @@ export type WebSocketServerMessage =
   | WebSocketStreamAIDone
   | WebSocketTitleGeneratedMessage
   | WebSocketStreamRegenerteResponse
-  | WebSocketRegenerateResponseDone;
+  | WebSocketRegenerateResponseDone
+  | WebSocketErrorMessage;
 
 
 export type Message = {
