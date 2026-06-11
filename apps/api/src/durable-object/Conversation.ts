@@ -6,7 +6,6 @@ import {
   MessageSchema,
   PDFSchema,
   QueryMessages,
-  UpdateConversationTitle,
   UpdateMessageContent,
 } from "./sql";
 import {
@@ -14,6 +13,7 @@ import {
   Role,
   WebSocketClientMessage,
   WebSocketCreateStreamMessage,
+  WebSocketErrorMessage,
   WebSocketRegenerateResponseDone,
   WebSocketRegenerateStreamMessage,
   WebSocketStreamAIDone,
@@ -21,7 +21,10 @@ import {
   WebSocketStreamRegenerteResponse,
   WebSocketTitleGeneratedMessage,
 } from "@workspace/types";
-import { toBase64 } from "@/utils";
+import { toBase64 } from "@/lib/utils";
+import { User, Credit, Model, Db } from "@/lib/credit-system";
+import { conversation } from "@workspace/Db";
+import { eq } from "drizzle-orm";
 
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
@@ -33,6 +36,8 @@ export class Conversation extends DurableObject<Env> {
       this.ctx.storage.sql.exec(MessageSchema);
       this.ctx.storage.sql.exec(ImageSchema);
       this.ctx.storage.sql.exec(PDFSchema);
+      Db.initDB(this.env.D1_DATABASE);
+      Model.warmCache();
 
       this.messages = this.ctx.storage.sql
         .exec(QueryMessages)
@@ -74,88 +79,118 @@ export class Conversation extends DurableObject<Env> {
   ) {
     const { eventId, conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];
-
-    const userMessageId = crypto.randomUUID();
-    let currentUserMessage: Message = {
-      id: userMessageId,
-      role,
-      model,
-      content,
-      pdfs: [],
-      images: [],
-    };
-
-    this.messages = [...this.messages, currentUserMessage];
-    this.abortController = new AbortController();
-
-    this.ctx.storage.sql.exec(
-      InsertIntoMessage,
-      userMessageId,
-      role,
-      content,
-      model,
-      Date.now(),
-    );
-
-    // only supports images as of now.
-    const contentBlock = [];
-
-    if (objects && objects.length > 0) {
-      for (const obj of objects) {
-        if (!obj.type.startsWith("image/")) continue;
-
-        const object = await this.env.IMAGES_BUCKET.get(obj.name);
-
-        if (!object) {
-          continue;
-        }
-
-        this.ctx.storage.sql.exec(
-          InsertIntoImage,
-          crypto.randomUUID(),
-          obj.name,
-          obj.size,
-          userMessageId,
-          Date.now(),
+    let estimatedCredits = 0;
+    let isReseverd = false;
+    try {
+      const hasAccess = await User.hasAccess("HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs", model);
+      if (!hasAccess) {
+        this.sendErrorMessage(
+          ws,
+          "Please Upgrade to Pro to access these models",
+          conversationId,
+          eventId,
         );
-        this.messages = this.messages.map((message) =>
-          message.id === userMessageId
-            ? {
-                ...message,
-                images: [
-                  ...(message.images ?? []),
-                  { name: obj.name, size: obj.size, type: obj.type },
-                ],
-              }
-            : message,
+        return;
+      }
+
+      const estimatedInputTokens = Model.estimateInputTokens(content);
+      const estimatedOutputTokens = Model.estimateOutputTokens();
+      estimatedCredits = Credit.calculate(
+        model,
+        estimatedInputTokens,
+        estimatedOutputTokens,
+      );
+
+      isReseverd = await Credit.reserve("HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs", estimatedCredits);
+      if (!isReseverd) {
+        this.sendErrorMessage(
+          ws,
+          "Insufficient credits. Either credits too low or you dont have enough credits",
+          conversationId,
+          eventId,
         );
+        return;
+      }
 
-        const buffer = await object.arrayBuffer();
-        const base64 = toBase64(buffer);
+      const userMessageId = crypto.randomUUID();
+      let currentUserMessage: Message = {
+        id: userMessageId,
+        role,
+        model,
+        content,
+        pdfs: [],
+        images: [],
+      };
 
-        switch (provider) {
-          case "anthropic":
-            contentBlock.push({
-              type: "image",
-              source: { type: "base64", media_type: obj.type, data: base64 },
-            });
-            break;
-          case "google":
-            contentBlock.push({
-              inlineData: { mimeType: obj.type, data: base64 },
-            });
-            break;
-          default:
-            contentBlock.push({
-              type: "image_url",
-              image_url: { url: `data:${obj.type};base64,${base64}` },
-            });
-            break;
+      this.messages = [...this.messages, currentUserMessage];
+      this.abortController = new AbortController();
+
+      this.ctx.storage.sql.exec(
+        InsertIntoMessage,
+        userMessageId,
+        role,
+        content,
+        model,
+        Date.now(),
+      );
+
+      const contentBlock = [];
+
+      if (objects && objects.length > 0) {
+        for (const obj of objects) {
+          if (!obj.type.startsWith("image/")) continue;
+
+          const object = await this.env.IMAGES_BUCKET.get(obj.name);
+
+          if (!object) {
+            continue;
+          }
+
+          this.ctx.storage.sql.exec(
+            InsertIntoImage,
+            crypto.randomUUID(),
+            obj.name,
+            obj.size,
+            userMessageId,
+            Date.now(),
+          );
+          this.messages = this.messages.map((message) =>
+            message.id === userMessageId
+              ? {
+                  ...message,
+                  images: [
+                    ...(message.images ?? []),
+                    { name: obj.name, size: obj.size, type: obj.type },
+                  ],
+                }
+              : message,
+          );
+
+          const buffer = await object.arrayBuffer();
+          const base64 = toBase64(buffer);
+
+          switch (provider) {
+            case "anthropic":
+              contentBlock.push({
+                type: "image",
+                source: { type: "base64", media_type: obj.type, data: base64 },
+              });
+              break;
+            case "google":
+              contentBlock.push({
+                inlineData: { mimeType: obj.type, data: base64 },
+              });
+              break;
+            default:
+              contentBlock.push({
+                type: "image_url",
+                image_url: { url: `data:${obj.type};base64,${base64}` },
+              });
+              break;
+          }
         }
       }
-    }
-    contentBlock.push({ type: "text", text: content });
-    try {
+      contentBlock.push({ type: "text", text: content });
       const stream = (await this.env.AI.run(
         model,
         {
@@ -167,6 +202,7 @@ export class Conversation extends DurableObject<Env> {
             },
           ],
           stream: true,
+          metadata: true,
         },
         {
           signal: this.abortController.signal,
@@ -179,6 +215,8 @@ export class Conversation extends DurableObject<Env> {
       let buffer = "";
       let fullContent = "";
       let isDone = false;
+      let actualInputTokens = 0;
+      let actualOutputTokens = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -202,6 +240,16 @@ export class Conversation extends DurableObject<Env> {
 
           const json = JSON.parse(dataLine.slice(6));
 
+          if (json.usage) {
+            actualInputTokens =
+              json.usage.prompt_tokens ??
+              json.usage.input_tokens ??
+              actualInputTokens;
+            actualOutputTokens =
+              json.usage.completion_tokens ??
+              json.usage.output_tokens ??
+              actualOutputTokens;
+          }
           const token =
             json.response ?? json.choices?.[0]?.delta?.content ?? "";
 
@@ -243,6 +291,13 @@ export class Conversation extends DurableObject<Env> {
           Date.now(),
         );
         ws.send(JSON.stringify(streamDoneMessage));
+
+        const actualCredits = Credit.calculate(
+          model,
+          actualInputTokens,
+          actualOutputTokens,
+        );
+        await Credit.settle("HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs", estimatedCredits, actualCredits);
       }
 
       if (this.messages.length === 2) {
@@ -267,10 +322,7 @@ export class Conversation extends DurableObject<Env> {
         )) as { response: string };
         const title = response.response?.trim();
 
-        await this.env.D1_DATABASE.prepare(UpdateConversationTitle)
-          .bind(title, conversationId)
-          .run();
-
+        await Db.get().update(conversation).set({ title }).where(eq(conversation.id, conversationId))
         const titleGeneratedEvent: WebSocketTitleGeneratedMessage = {
           type: "chat.title.generated",
           conversationId,
@@ -280,14 +332,15 @@ export class Conversation extends DurableObject<Env> {
         ws.send(JSON.stringify(titleGeneratedEvent));
       }
     } catch (error) {
+      if(isReseverd) {
+        await Credit.release("HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs", estimatedCredits);
+      }
       if (error instanceof Error && error.name === "AbortError") {
         console.log(`Stream aborted for conversation ${conversationId}`);
       } else {
-        console.error(
-          `Error processing stream for conversation ${conversationId}:`,
-          error,
-        );
-        throw error;
+        console.error(`Error processing stream for conversation ${conversationId}:`,error)
+        this.sendErrorMessage(ws, "Something went wrong. Please try again later", conversationId, eventId)
+        ;
       }
     }
   }
@@ -317,7 +370,7 @@ export class Conversation extends DurableObject<Env> {
           ],
           stream: true,
         },
-        { signal: this.abortController.signal, gateway: { id: "onechat" }},
+        { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
       const reader = stream.getReader();
@@ -327,7 +380,6 @@ export class Conversation extends DurableObject<Env> {
       let isDone = false;
 
       while (true) {
-
         const { done, value } = await reader.read();
         if (done) {
           break;
@@ -367,8 +419,6 @@ export class Conversation extends DurableObject<Env> {
         }
       }
       if (isDone) {
-        console.log("doneeeee");
-
         const regenerateStreamDoneMessage: WebSocketRegenerateResponseDone = {
           type: "chat.regenerate.done",
           messageId,
@@ -395,5 +445,20 @@ export class Conversation extends DurableObject<Env> {
 
   async destroy() {
     await this.ctx.storage.deleteAll();
+  }
+
+  async sendErrorMessage(
+    ws: WebSocket,
+    message: string,
+    conversationId: string,
+    eventId: string,
+  ) {
+    const errorMessage: WebSocketErrorMessage = {
+      type: "chat.stream.error",
+      conversationId,
+      eventId,
+      message,
+    };
+    ws.send(JSON.stringify(errorMessage));
   }
 }

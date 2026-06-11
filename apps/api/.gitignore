@@ -1,5 +1,7 @@
 # prod
 dist/
+./src/model-pricing-seed.ts
+./src/seed.sql
 
 # dev
 .yarn/

@@ -1,21 +1,34 @@
+import { Db } from "./Db";
 import { Model } from "./Model";
+import { eq } from "drizzle-orm";
+import { user } from "@workspace/db";
 
 export class User {
 
-    private static async getUser(userId: string) {
-        const user = { tier: "free" };
-        return user;
-    }
+  static async getUser(userId: string) {
+    const db = Db.get();
+    const existingUser = await db.query.user.findFirst({
+      where: eq(user.id, userId),
+    });
+    return existingUser;
+  }
 
-    static async getUserCredits(userId: string) {
-        const user = { credit_balance: 1000 };
-        return user;
-    }
+  static async getUserCredits(userId: string) {
+    const db = Db.get();
+    const userCredits = await db.query.user.findFirst({
+      where: eq(user.id, userId),
+      columns: { id: true, credit_balance: true, reserved_credits: true },
+    });
+    return userCredits;
+  }
 
-    static async userHasAccess(userId: string, modelId: string) {
-        const user = await User.getUser(userId);
-        const model = Model.getModel(modelId);
+  static async hasAccess(userId: string, modelId: string): Promise<boolean> {
+    const user = await User.getUser(userId);
+    const model = await Model.getModel(modelId);
 
-        return user.tier === model?.minTier
+    if (model.minTier === "free") {
+      return true;
     }
+    return model.minTier === "pro" && user?.tier === "pro";
+  }
 }

@@ -8,7 +8,7 @@ const router = new Hono<{ Bindings: Bindings; Variables: Variables }>({
 });
 
 router.get("/conversations", async (c) => {
-  const userId = "VCY2XaUNgKPbmcmkEuwAiyfLy10W6L5A";
+  const userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs";
   const db = c.get("db");
 
   const conversations = await db.query.conversation.findMany({
@@ -61,7 +61,7 @@ router.post("/create", async (c) => {
 
   await db.insert(conversation).values({
     id: conversationId,
-    userId: "VCY2XaUNgKPbmcmkEuwAiyfLy10W6L5A",
+    userId: "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -77,9 +77,6 @@ router.get("/chat", async (c) => {
     if (!conversationId) {
       return c.json({ message: "Conversation id is required" }, 400);
     }
-    // check for credits
-    
-
     const existing = await db.query.conversation.findFirst({
       where: eq(conversation.id, conversationId),
     });

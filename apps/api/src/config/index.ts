@@ -1,1 +1,0 @@
-export const MAXIMUM_CHARACTERS_LENGTH = 1000;
