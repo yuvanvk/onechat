@@ -1,6 +1,5 @@
 export type WebSocketCreateStreamMessage = {
   type: "chat.stream.create";
-  eventId: string;
   role: Role.User;
   model: string;
   content: string;
@@ -8,9 +7,17 @@ export type WebSocketCreateStreamMessage = {
   conversationId: string;
 };
 
+export type WebSocketGenerateImage = {
+  type: "chat.generate.image",
+  role: Role.User
+  content: string;
+  model: string;
+  conversationId: string;
+  objects?: { name: string; type: string; size: number }[];
+}
+
 export type WebSocketCancelMessage = {
   type: "chat.stream.cancel";
-  eventId: string;
   conversationId: string;
 };
 
@@ -38,7 +45,6 @@ export type WebSocketRegenerateResponseDone = {
 
 export type WebSocketStreamAIResponse = {
   type: "chat.stream.response";
-  eventId: string;
   role: Role.Assistant;
   content: string;
   conversationId: string;
@@ -46,7 +52,6 @@ export type WebSocketStreamAIResponse = {
 
 export type WebSocketStreamAIDone = {
   type: "chat.stream.done";
-  eventId: string;
   conversationId: string;
   userMessageId?: string;
   aiMessageId?: string;
@@ -54,14 +59,22 @@ export type WebSocketStreamAIDone = {
 
 export type WebSocketTitleGeneratedMessage = {
   type: "chat.title.generated";
-  eventId: string;
   title: string;
   conversationId: string; 
 }
 
+export type WebSocketImageGenerated = {
+  type: "chat.generated.image";
+  id: string,
+  role: Role.Assistant,
+  messageType: "image";
+  conversationId: string;
+  imageKey: string;
+  userMessageId: string;
+}
+
 export type WebSocketErrorMessage = {
   type: "chat.stream.error",
-  eventId: string,
   conversationId: string,
   message: string
 }
@@ -69,7 +82,8 @@ export type WebSocketErrorMessage = {
 export type WebSocketClientMessage =
   | WebSocketCreateStreamMessage
   | WebSocketCancelMessage
-  | WebSocketRegenerateStreamMessage;
+  | WebSocketRegenerateStreamMessage
+  | WebSocketGenerateImage;
 
 
 export type WebSocketServerMessage =
@@ -78,16 +92,19 @@ export type WebSocketServerMessage =
   | WebSocketTitleGeneratedMessage
   | WebSocketStreamRegenerteResponse
   | WebSocketRegenerateResponseDone
-  | WebSocketErrorMessage;
+  | WebSocketErrorMessage
+  |WebSocketImageGenerated;
 
 
 export type Message = {
   id?: string
   role: Role;
-  content: string;
+  messageType: "text" | "image";
+  content?: string;
   model?: string;
   pdfs?: { name: string; type: string; size: number }[];
   images?: { name: string; type: string; size: number }[];
+  imageKey?: string;
 };
 
 export type Conversation = {

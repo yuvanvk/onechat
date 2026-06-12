@@ -121,6 +121,13 @@ export const SUPPORTED_MODELS: Record<string, Model[]> = {
       free: false,
       capabilities: ["text", "reasoning", "coding"],
     },
+    {
+      id: "openai/gpt-image-1.5",
+      displayName: "GPT Image 1.5",
+      icon: OpenAI,
+      free: false,
+      capabilities: ["image-gen"]
+    }
   ],
   anthropic: [
     {
@@ -195,6 +202,13 @@ export const SUPPORTED_MODELS: Record<string, Model[]> = {
       free: false,
       capabilities: ["text", "vision"],
     },
+    {
+      id: "google/imagen-4",
+      displayName: "Imagen 4",
+      icon: Gemini,
+      free: false,
+      capabilities: ["image-gen"]
+    }
   ],
   meta: [
     {

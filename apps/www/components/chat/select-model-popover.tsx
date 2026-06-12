@@ -95,8 +95,8 @@ export const SelectModelPopover = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ ease: "easeInOut", duration: 0.1 }}
             className={cn(
-              "w-[450px] min-h-[500px] max-h-[500px] rounded-xl bg-[#121212] border border-neutral-800 overflow-hidden",
-              "absolute bottom-[36px] flex flex-col gap-2",
+              "w-112.5 min-h-125 max-h-125 rounded-xl bg-background border border-[#FE5E1E]/10 overflow-hidden",
+              "absolute bottom-9 flex flex-col gap-2",
             )}
           >
             {/* Top Search Bar and filter */}
@@ -125,7 +125,7 @@ export const SelectModelPopover = () => {
               {!hasSearch && (
                 <div
                   className={cn(
-                    "absolute inset-y-0 bg-neutral-900 w-15 rounded-tr-xl border-r border-t border-neutral-900",
+                    "absolute inset-y-0 bg-background-muted w-15 rounded-tr-xl border-r border-t border-neutral-800",
                     "flex flex-col gap-7 items-center py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >

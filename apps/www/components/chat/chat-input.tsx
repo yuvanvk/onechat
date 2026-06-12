@@ -13,12 +13,19 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
 import { uploadToBucket } from "@/utils/upload-to-bucket";
-import { Role, WebSocketCreateStreamMessage } from "@workspace/types";
+import {
+  Role,
+  WebSocketCreateStreamMessage,
+  WebSocketGenerateImage,
+} from "@workspace/types";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useModel } from "@/store/useModel";
+import { isModelImageGen } from "@/lib/helper/is-model-image-gen";
 
 export const ChatInput = () => {
   const { id } = useParams();
   const router = useRouter();
+  const { modelId } = useModel();
 
   const {
     addMessage,
@@ -36,8 +43,15 @@ export const ChatInput = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { send } = useSocket(conversationId as string);
 
-  const hasInput = useMemo(() => input.length > 0 || attachments.length > 0, [input, attachments]);
-  const objects = useMemo(() => attachments.map((a) => ({ name: a.name, type: a.type, size: a.size })), [attachments]);
+  const hasInput = useMemo(
+    () => input.length > 0 || attachments.length > 0,
+    [input, attachments],
+  );
+  const objects = useMemo(
+    () =>
+      attachments.map((a) => ({ name: a.name, type: a.type, size: a.size })),
+    [attachments],
+  );
 
   const fileMapRef = useRef<Record<string, File>>({});
 
@@ -159,6 +173,7 @@ export const ChatInput = () => {
     const content = input;
     setInput("");
     setAttachments([]);
+
     let activeId = id as string;
 
     if (!activeId) {
@@ -169,19 +184,79 @@ export const ChatInput = () => {
       const { data } = await response.json();
       activeId = data.conversationId;
       setConversationId(activeId);
-      setPendingMessage({
-        type: "chat.stream.create",
-        eventId: crypto.randomUUID(),
-        role: Role.User,
-        content,
-        conversationId: activeId,
-        objects,
-        model: "@cf/moonshotai/kimi-k2.6",
+
+      if (isModelImageGen(modelId)) {
+        setPendingMessage({
+          type: "chat.generate.image",
+          role: Role.User,
+          content,
+          conversationId: activeId,
+          model: "@cf/black-forest-labs/flux-1-schnell",
+        });
+        addMessage({
+          id: "new-user-message",
+          role: "user" as Role,
+          content,
+          messageType: "text",
+          // images: attachments
+          //   .filter((a) => a.type.startsWith("image/"))
+          //   .map((a) => ({ name: a.name, size: a.size, type: a.type })),
+        });
+        addMessage({
+          id: "new-ai-message",
+          role: "assistant" as Role,
+          messageType: "image",
+        });
+      } else {
+        setPendingMessage({
+          type: "chat.stream.create",
+          role: Role.User,
+          content,
+          conversationId: activeId,
+          objects,
+          model: modelId,
+        });
+        addMessage({
+          id: "new-user-message",
+          role: "user" as Role,
+          content,
+          messageType: "text",
+          images: attachments
+            .filter((a) => a.type.startsWith("image/"))
+            .map((a) => ({ name: a.name, size: a.size, type: a.type })),
+        });
+        addMessage({
+          id: "new-ai-message",
+          role: "assistant" as Role,
+          content: "",
+          messageType: "text",
+        });
+      }
+      router.push(`/c/${activeId}`);
+      return;
+    }
+    if (isModelImageGen(modelId)) {
+      addMessage({
+        id: "new-user-message",
+        role: "user" as Role,
+        content: content,
+        messageType: "text",
+        // images: attachments
+        //   .filter((a) => a.type.startsWith("image/"))
+        //   .map((a) => ({ name: a.name, size: a.size, type: a.type })),
       });
+
+      addMessage({
+        id: "new-ai-message",
+        role: "assistant" as Role,
+        messageType: "image",
+      });
+    } else {
       addMessage({
         id: "new-user-message",
         role: "user" as Role,
         content,
+        messageType: "text",
         images: attachments
           .filter((a) => a.type.startsWith("image/"))
           .map((a) => ({ name: a.name, size: a.size, type: a.type })),
@@ -190,35 +265,30 @@ export const ChatInput = () => {
         id: "new-ai-message",
         role: "assistant" as Role,
         content: "",
+        messageType: "text",
       });
-      router.push(`/c/${activeId}`);
-      return;
     }
-    addMessage({
-      id: "new-user-message",
-      role: "user" as Role,
-      content: content,
-      images: attachments
-        .filter((a) => a.type.startsWith("image/"))
-        .map((a) => ({ name: a.name, size: a.size, type: a.type })),
-    });
-
-    addMessage({
-      id: "new-ai-message",
-      role: "assistant" as Role,
-      content: "",
-    });
 
     try {
-      const createMessage: WebSocketCreateStreamMessage = {
-        type: "chat.stream.create",
-        eventId: crypto.randomUUID(),
-        role: Role.User,
-        content,
-        conversationId: activeId,
-        model: "@cf/moonshotai/kimi-k2.6",
-        objects,
-      };
+      let createMessage: WebSocketCreateStreamMessage | WebSocketGenerateImage;
+      if (isModelImageGen(modelId)) {
+        createMessage = {
+          type: "chat.generate.image",
+          role: Role.User,
+          content,
+          conversationId: activeId,
+          model: modelId,
+        };
+      } else {
+        createMessage = {
+          type: "chat.stream.create",
+          role: Role.User,
+          content,
+          conversationId: activeId,
+          model: modelId,
+        };
+      }
+      console.log(createMessage);
       send(createMessage);
     } catch (error) {
       if (error instanceof Error) {

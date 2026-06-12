@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { Bindings, Variables } from "@/types";
 import { conversation } from "@workspace/db";
+import { ImageSchema } from "@/zod";
 
 const router = new Hono<{ Bindings: Bindings; Variables: Variables }>({
   strict: false,
@@ -167,4 +168,5 @@ router.post("/chat/share/:conversationId", async (c) => {
     return c.json({ message: "Internal Server Error" }, 500);
   }
 });
+
 export default router;

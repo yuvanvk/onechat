@@ -282,3 +282,38 @@ export const Kimi = ({ size = 20, ...props }: IconProps) => (
     <path d="M321.512 144.254h-50.064l-39.637 90.384h-56.036v-89.99H131v232.868h44.787v-98.103h78.973c13.598 0 26.015-7.927 31.744-20.252v118.355h44.787v-98.103c0-23.342-18.239-42.97-41.523-44.671v-.116h-24.593a45.577 45.577 0 0026.884-24.534l29.453-65.838z" fill="#fff" />
   </svg>
 );
+export const Flux = ({ size = 20, ...props }: IconProps) => (
+  <svg
+    {...props}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fillRule="evenodd"
+    fill="currentColor"
+  >
+    <path d="M0 20.683 12.01 2.5 24 20.683h-2.233L12.009 5.878 3.471 18.806h12.122l1.239 1.877z" />
+    <path d="m8.069 16.724 2.073-3.115 2.074 3.115zm10.171 3.959-5.668-8.707h2.177l5.686 8.707zm1.5-9.007 2.13-3.19 2.13 3.19z" />
+  </svg>
+);
+
+export const Recraft = ({ size = 20, ...props }: IconProps) => (
+  <svg
+    {...props}
+    width={size}
+    height={size}
+    viewBox="0 0 48 48"
+    fill="none"
+  >
+    <rect width="48" height="48" rx="8" fill="currentColor" />
+    <g fillRule="evenodd" clipRule="evenodd">
+      <path
+        fill="var(--icon-bg, #000)"
+        d="M34.9 18.5c0-6.5-6-11.7-13.2-11.7-2.5 0-4.5 5.2-4.5 11.7q0 2.4.3 4.5h-4.4L8.4 39.3h13.3v-9.1C29 30.2 35 24.9 35 18.5M21.7 8.9c1.3 0 2.4 4.3 2.4 9.6s-1 9.5-2.4 9.5-2.4-4.2-2.4-9.5 1.1-9.6 2.4-9.6"
+      />
+      <path
+        fill="var(--icon-bg, #000)"
+        d="M35.1 30.2H21.7l5.2 9.1h13.3z"
+      />
+    </g>
+  </svg>
+);

@@ -1,12 +1,18 @@
 import { create } from "zustand";
-import { Message, WebSocketCreateStreamMessage } from "@workspace/types";
+import {
+  Message,
+  WebSocketCreateStreamMessage,
+  WebSocketGenerateImage,
+} from "@workspace/types";
 
 interface ChatStore {
   conversationId: string;
   messages: Message[];
-  pendingMessage: WebSocketCreateStreamMessage | null;
+  pendingMessage: WebSocketCreateStreamMessage | WebSocketGenerateImage | null;
   setMessages: (messages: Message[]) => void;
-  setPendingMessage: (message: WebSocketCreateStreamMessage | null) => void;
+  setPendingMessage: (
+    message: WebSocketCreateStreamMessage | WebSocketGenerateImage | null,
+  ) => void;
   addMessage: (message: Message) => void;
   updateMessage: (opts: {
     token?: string;
@@ -16,6 +22,7 @@ interface ChatStore {
   setConversationId: (conversationId: string) => void;
   setRegeneratedMessage: (messageId: string, token: string) => void;
   setMessageEmpty: (messageId: string) => void;
+  setImageKey: (imageKey: string) => void;
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -53,6 +60,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({
       messages: get().messages.map((message) =>
         message.id === messageId ? { ...message, content: "" } : message,
+      ),
+    }),
+  setImageKey: (imageKey: string) =>
+    set({
+      messages: get().messages.map((message) =>
+        message.id === "new-ai-message" ? { ...message, imageKey } : message,
       ),
     }),
 }));

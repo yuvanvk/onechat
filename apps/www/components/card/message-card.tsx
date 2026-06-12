@@ -2,19 +2,14 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import {
-  Message,
-  WebSocketClientMessage,
-  WebSocketRegenerateStreamMessage,
-} from "@workspace/types";
 import ReactMarkdown from "react-markdown";
-import { Copy, RotateCcw } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
-import { Button } from "@workspace/ui/components/button";
 import { useSocket } from "@/hooks/useSocket";
-import { useParams } from "next/navigation";
+import { Copy, RotateCcw } from "lucide-react";
 import { useChatStore } from "@/store/useChat";
+import { AnimatePresence, motion } from "motion/react";
+import { Button } from "@workspace/ui/components/button";
+import { Message, WebSocketRegenerateStreamMessage } from "@workspace/types";
 
 const PROSE_CLASSES = `
   prose prose-invert prose-neutral max-w-none
@@ -34,7 +29,7 @@ const PROSE_CLASSES = `
 const getImageUrl = (key: string) =>
   `http://localhost:8787/api/v1/r2/images/${key}`;
 
-function ThinkingIndicator() {
+function ThinkingIndicator({ loaderText = "Thinking..."}: { loaderText?: string }) {
   return (
     <motion.span
       className="bg-linear-to-r from-zinc-500 via-zinc-100 to-zinc-500 bg-clip-text text-transparent text-[13px] flex items-center gap-1"
@@ -43,7 +38,7 @@ function ThinkingIndicator() {
       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
     >
       <img src="/logo.svg" className="w-4 h-4" />
-      Thinking…
+      {loaderText}
     </motion.span>
   );
 }
@@ -73,8 +68,10 @@ function MessageActions({
 
 export function MessageCard({
   id,
+  messageType,
   content,
   role,
+  imageKey,
   images,
   pdfs,
   model = "@cf/moonshotai/kimi-k2.6",
@@ -84,7 +81,7 @@ export function MessageCard({
   const { send } = useSocket(conversationId as string);
 
   const isUser = role === "user";
-
+  
   async function handleCopy() {
     if (!content) return;
     try {
@@ -95,7 +92,7 @@ export function MessageCard({
   }
 
   async function handleRegenerate() {
-    console.log("inside re-gen");
+    if (!content) return;
     setMessageEmpty(id!);
     const regenerateMessage: WebSocketRegenerateStreamMessage = {
       type: "chat.stream.regenerate",
@@ -167,15 +164,28 @@ export function MessageCard({
         {isUser && <div>{content}</div>}
 
         {!isUser && (
-          <>
-            {!content && <ThinkingIndicator />}
-            {content && (
+          messageType === "text" ? (
+            !content ? (
+              <ThinkingIndicator />
+            ) : (
               <div className={PROSE_CLASSES}>
                 <ReactMarkdown>{content}</ReactMarkdown>
               </div>
-            )}
-          </>
+            )
+          ) : (
+            !imageKey ? (
+              <ThinkingIndicator loaderText="Generating Image..." />
+            ) : (
+              <Image
+                src={getImageUrl(encodeURIComponent(imageKey))}
+                alt={imageKey}
+                width={400}
+                height={400}
+              />
+            )
+          )
         )}
+  
       </motion.div>
 
       {/* Actions */}

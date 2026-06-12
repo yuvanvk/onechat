@@ -43,8 +43,11 @@ export const Chat = () => {
                   <MessageCard
                     id={message.id}
                     key={idx}
+                    messageType={message.messageType ?? (message as any).message_type}
                     content={message.content}
                     role={message.role}
+                    pdfs={message.pdfs}
+                    imageKey={message.imageKey ?? (message as any).image_key}
                     images={
                       typeof message.images === "string"
                         ? JSON.parse(
@@ -52,7 +55,6 @@ export const Chat = () => {
                           ).filter(Boolean)
                         : message.images
                     }
-                    pdfs={message.pdfs}
                   />
                 ))}
             </>

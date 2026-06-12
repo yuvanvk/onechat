@@ -7,10 +7,11 @@ import {
   WebSocketServerMessage,
 } from "@workspace/types";
 import { useConversationStore } from "@/store/useConversation";
+import { toast } from "sonner";
 
 export function useSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
-  const { updateMessage, setRegeneratedMessage } = useChatStore();
+  const { updateMessage, setRegeneratedMessage, setImageKey } = useChatStore();
   const { setTitle } = useConversationStore();
 
   useEffect(() => {
@@ -36,6 +37,14 @@ export function useSocket(conversationId: string) {
         case "chat.stream.done":
           updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
           updateMessage({ id: "new-ai-message", setId: parsed.aiMessageId });
+          break;
+        case "chat.stream.error":
+          toast.error(parsed.message);
+          break;
+        case "chat.generated.image":
+          setImageKey(parsed.imageKey);
+          updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
+          updateMessage({ id: "new-ai-message", setId: parsed.id });
           break;
       }
     };

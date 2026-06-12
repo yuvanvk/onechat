@@ -2,12 +2,14 @@ import {
   Anthropic,
   DeepSeek,
   Favourite,
+  Flux,
   Gemini,
   Kimi,
   Meta,
   MistralAI,
   OpenAI,
   Qwen,
+  Recraft,
   xAI,
 } from "@/components/icons";
 
@@ -149,6 +151,14 @@ export const SELECT_MODELS: ModelProvider[] = [
         free: false,
         capabilities: ["text", "reasoning", "coding"],
       },
+      {
+        id: "openai/gpt-image-1.5",
+        displayName: "GPT Image 1.5",
+        description:
+          "OpenAI's image generation model that creates and edits images from text prompt.",
+        free: false,
+        capabilities: ["image-gen"],
+      },
     ],
   },
   {
@@ -210,6 +220,14 @@ export const SELECT_MODELS: ModelProvider[] = [
           "Google's most intelligent family of open models, built from Gemini 3 research for maximum intelligence-per-parameter.",
         free: false,
         capabilities: ["text", "vision"],
+      },
+      {
+        id: "google/imagen-4",
+        displayName: "Imagen 4",
+        description:
+          "Google's latest image generation model producing high-quality, photorealistic images from text prompts.",
+        free: false,
+        capabilities: ["image-gen"],
       },
     ],
   },
@@ -368,40 +386,87 @@ export const SELECT_MODELS: ModelProvider[] = [
         capabilities: ["text", "reasoning", "coding", "multilingual"],
       },
       {
-      id: "@cf/qwen/qwq-32b",
-      displayName: "Qwen 32b",
-      description: "QwQ is the reasoning model of the Qwen series. Compared with conventional instruction-tuned models, QwQ, which is capable of thinking and reasoning",
-      free: false,
-      capabilities: ["text"],
-    },
-    {
-      id: "@cf/qwen/qwen3-30b-a3b-fp8",
-      displayName: "Qwen 30b",
-      description: "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models",
-      free: true,
-      capabilities: ["text"],
-    },
-    {
-      id: "@cf/qwen/qwen2.5-coder-32b-instruct",
-      displayName: "Qwen 2.5 Coder 32b Instruct",
-      description: "Qwen2.5-Coder is the latest series of Code-Specific Qwen large language models (formerly known as CodeQwen). ",
-      free: false,
-      capabilities: ["text", "coding"],
-    },
+        id: "@cf/qwen/qwq-32b",
+        displayName: "Qwen 32b",
+        description:
+          "QwQ is the reasoning model of the Qwen series. Compared with conventional instruction-tuned models, QwQ, which is capable of thinking and reasoning",
+        free: false,
+        capabilities: ["text"],
+      },
+      {
+        id: "@cf/qwen/qwen3-30b-a3b-fp8",
+        displayName: "Qwen 30b",
+        description:
+          "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models",
+        free: true,
+        capabilities: ["text"],
+      },
+      {
+        id: "@cf/qwen/qwen2.5-coder-32b-instruct",
+        displayName: "Qwen 2.5 Coder 32b Instruct",
+        description:
+          "Qwen2.5-Coder is the latest series of Code-Specific Qwen large language models (formerly known as CodeQwen). ",
+        free: false,
+        capabilities: ["text", "coding"],
+      },
     ],
   },
   {
     id: "deepseek",
     icon: DeepSeek,
     models: [
-    
-    {
-      id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
-      displayName: "DeepSeek R1 Distill Qwen 32b",
-      description: "DeepSeek-R1-Distill-Qwen-32B is a model distilled from DeepSeek-R1 based on Qwen2.5. It outperforms OpenAI-o1-mini across various benchmarks, achieving new state-of-the-art results for dense models.",
-      free: true,
-      capabilities: ["text", "reasoning", "coding"],
-    },
-    ]
-  }
+      {
+        id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+        displayName: "DeepSeek R1 Distill Qwen 32b",
+        description:
+          "DeepSeek-R1-Distill-Qwen-32B is a model distilled from DeepSeek-R1 based on Qwen2.5. It outperforms OpenAI-o1-mini across various benchmarks, achieving new state-of-the-art results for dense models.",
+        free: true,
+        capabilities: ["text", "reasoning", "coding"],
+      },
+    ],
+  },
+  {
+    id: "recraft",
+    icon: Recraft,
+    models: [
+      {
+        id: "recraft/recraftv4-pro",
+        displayName: "Recraft V4 Pro",
+        description:
+          "Recraft V4 Pro generates high-resolution, art-directed images at 2048px+ with strong composition, text rendering, and design taste. Built for print and production work.",
+        free: false,
+        capabilities: ["image-gen"],
+      },
+      {
+        id: "recraft/recraftv4-vector",
+        displayName: "Recraft V4 Vector",
+        description:
+          "Generate production-ready SVG vector graphics from text prompts with clean geometry, structured layers, and editable paths.",
+        free: false,
+        capabilities: ["image-gen"],
+      },
+    ],
+  },
+  {
+    id: "black-forest-labs",
+    icon: Flux,
+    models: [
+      {
+        id: "@cf/black-forest-labs/flux-2-klein-9b",
+        displayName: "Flux-2 Klein 9B",
+        description:
+          "FLUX.2 [klein] 9B is an ultra-fast, distilled image model with enhanced quality. It unifies image generation and editing in a single model, delivering state-of-the-art quality enabling interactive workflows, real-time previews, and latency-critical applications.",
+        free: false,
+        capabilities: ["image-gen"],
+      },
+      {
+        id: "@cf/black-forest-labs/flux-1-schnell",
+        displayName: "Flux-1 Schnell",
+        description:
+          "FLUX.1 [schnell] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions.",
+        free: true,
+        capabilities: ["image-gen"],
+      },
+    ],
+  },
 ];

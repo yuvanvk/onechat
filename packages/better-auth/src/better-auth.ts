@@ -48,8 +48,8 @@ export const auth = (env: Bindings) => {
     secret: env.BETTER_AUTH_SECRET,
     socialProviders: {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        clientId: env.GOOGLE_CLIENT_ID as string,
+        clientSecret: env.GOOGLE_CLIENT_SECRET as string,
       },
     },
   });
