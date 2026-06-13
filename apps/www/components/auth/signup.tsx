@@ -82,11 +82,11 @@ export const SignUp = () => {
       <div
         className={cn(
           "p-2 rounded-2xl max-w-lg w-full",
-          "border border-neutral-900 bg-neutral-950 shadow-2xl",
+          "border border-border bg-card shadow-2xl",
         )}
       >
         {/* Branding */}
-        <div className="h-52 w-full border border-neutral-900 rounded-xl relative overflow-hidden">
+        <div className="h-52 w-full border border-border rounded-xl relative overflow-hidden">
           <MemoizedTerminal {...TERMINAL_PROPS} />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <Logo />
@@ -103,10 +103,10 @@ export const SignUp = () => {
               placeholder="Enter your email address"
               onChange={(e) => setEmail(e.target.value)}
               className={cn(
-                "bg-neutral-900! border-neutral-800! transition-all",
+                "bg-input border-border transition-all",
               )}
             />
-            <span className="text-[13px] text-neutral-500 pl-2">
+            <span className="text-[13px] text-muted-foreground pl-2">
               We'll never share your email within anyone else.
             </span>
           </div>
@@ -120,7 +120,7 @@ export const SignUp = () => {
               placeholder="Enter your username"
               onChange={(e) => setUsername(e.target.value)}
               className={cn(
-                "bg-neutral-900! border-neutral-800! transition-all",
+                "bg-input border-border transition-all",
               )}
             />
           </div>
@@ -135,7 +135,7 @@ export const SignUp = () => {
                 type={showPassword ? "text" : "password"}
                 onChange={(e) => setPassword(e.target.value)}
                 className={cn(
-                  "bg-neutral-900! border-neutral-800! transition-all",
+                  "bg-input border-border transition-all",
                 )}
               />
               <Button
@@ -151,7 +151,7 @@ export const SignUp = () => {
           <Button
             onClick={handleLogin}
             className={cn(
-              "bg-neutral-900 text-neutral-100 border-neutral-800 mt-2",
+              "bg-secondary text-secondary-foreground border-border mt-2",
             )}
           >
             <FingerprintPattern />
@@ -159,13 +159,13 @@ export const SignUp = () => {
           </Button>
 
           <div className="flex items-center gap-2 w-full">
-            <hr className="grow border-t border-neutral-800" />
-            <span className="text-neutral-600 text-xs font-medium">or</span>
-            <hr className="grow border-t border-neutral-800" />
+            <hr className="grow border-t border-border" />
+            <span className="text-muted-foreground text-xs font-medium">or</span>
+            <hr className="grow border-t border-border" />
           </div>
 
           <Button
-            className={cn("bg-[#2d2d2c] text-neutral-100 border-neutral-700")}
+            className={cn("bg-secondary text-secondary-foreground border-border")}
           >
             <FcGoogle />
             Google
@@ -174,12 +174,12 @@ export const SignUp = () => {
       </div>
 
       <div className="flex flex-col text-center mt-6 gap-2">
-        <span className="text-sm text-neutral-500">
+        <span className="text-sm text-muted-foreground">
           By proceeding, you agree to our Terms and Privacy Policy.
         </span>
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-muted-foreground">
           All Rights Reserved © 2026{" "}
-          <span className="font-semibold text-neutral-400">onechat.com</span>
+          <span className="font-semibold text-foreground">onechat.com</span>
         </span>
       </div>
     </div>

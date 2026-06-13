@@ -35,29 +35,29 @@ export const VerifyEmail = () => {
   return (
     <div
       className={cn(
-        "max-w-3xl border-x border-dashed border-neutral-800 min-h-screen w-full mx-auto",
+        "max-w-3xl border-x border-dashed border-border min-h-screen w-full mx-auto",
         "flex flex-col items-center justify-center",
       )}
     >
       <div>
         {error && (
           <div className="flex items-center gap-2">
-            <ShieldBan size={20} className="text-neutral-300" />
-            <span className="text-xl font-medium text-neutral-300">
+            <ShieldBan size={20} className="text-muted-foreground" />
+            <span className="text-xl font-medium text-foreground">
               {error}.
             </span>
           </div>
         )}
         {data && (
           <div className="flex items-center gap-2 relative">
-            <MailOpen size={20} className="text-neutral-200" />
-            <span className="text-xl font-medium text-neutral-200">
+            <MailOpen size={20} className="text-foreground" />
+            <span className="text-xl font-medium text-foreground">
               Congratulations, Your email has been verifed
             </span>
             <Button
               size={"sm"}
               onClick={() => router.push("/login")}
-              className={cn("bg-[#2d2d2c] text-neutral-100 border-neutral-700")}
+              className={cn("bg-secondary text-secondary-foreground border-border")}
             >
               Login Here
             </Button>

@@ -55,15 +55,15 @@ export const SelectModelPopover = () => {
       <div
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 hover:bg-[#1C1C1C] rounded-lg px-2 py-1",
+          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1",
           "cursor-pointer transition-all duration-150 select-none",
-          open && "bg-[#1C1C1C]",
+          open && "bg-accent",
         )}
       >
         <div
           className={cn(
-            "text-[13px] text-neutral-400",
-            open && "text-neutral-200",
+            "text-[13px] text-muted-foreground",
+            open && "text-foreground",
           )}
         >
           {modelName}
@@ -80,7 +80,7 @@ export const SelectModelPopover = () => {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={cn("text-neutral-400", open && "text-neutral-200")}
+          className={cn("text-muted-foreground", open && "text-foreground")}
         >
           <path d="m6 9 6 6 6-6" />
         </motion.svg>
@@ -95,7 +95,7 @@ export const SelectModelPopover = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ ease: "easeInOut", duration: 0.1 }}
             className={cn(
-              "w-112.5 min-h-125 max-h-125 rounded-xl bg-background border border-[#FE5E1E]/10 overflow-hidden",
+              "w-112.5 min-h-125 max-h-125 rounded-xl bg-popover text-popover-foreground border border-border overflow-hidden",
               "absolute bottom-9 flex flex-col gap-2",
             )}
           >

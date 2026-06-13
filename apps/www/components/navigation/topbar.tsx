@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
-import { Forward, Trash2 } from "lucide-react";
+import { Cog, Forward, Trash2 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Spinner } from "@workspace/ui/components/spinner";
@@ -34,9 +34,9 @@ export function Topbar() {
   const router = useRouter();
   const { setMessages } = useChatStore();
   const [loading, setLoading] = useState(false);
-  const [shareLink, setshareLink] = useState<string>("");
+  const [shareLink, setShareLink] = useState<string>("");
   const path = usePathname();
-  console.log(path);
+  const isConversationPage = path.startsWith("/c/");
 
   async function handleDelete() {
     if (!id) return;
@@ -48,7 +48,7 @@ export function Topbar() {
           method: "DELETE",
         },
       );
-      const data = await response.json();
+      await response.json();
       router.push("/");
       setMessages([]);
     } catch (error) {
@@ -68,9 +68,9 @@ export function Topbar() {
           method: "POST",
         },
       );
-      const { message, data } = await response.json();
-      setshareLink(data.shareLink);
-    } catch (error) {
+      const { data } = await response.json();
+      setShareLink(data.shareLink);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -80,25 +80,25 @@ export function Topbar() {
     if (!shareLink) return;
     try {
       await navigator.clipboard.writeText(shareLink);
-    } catch (error) {}
+    } catch {}
   }
 
   return (
     <div
       className={cn(
-        "fixed top-3 right-2 p-1 rounded-2xl",
-        "flex items-center gap-1",
+        "fixed right-3 top-3 z-50 flex items-center gap-1 rounded-full border border-border/70 bg-background/85 p-1 text-foreground shadow-sm backdrop-blur-md",
       )}
     >
-      {path.startsWith("/c/") && (
+      {isConversationPage && (
         <>
           <Dialog>
             <DialogTrigger asChild onClick={handleShareLinkGeneration}>
               <Button
                 size={"icon-sm"}
+                aria-label="Share conversation"
                 className={cn(
-                  "rounded-full bg-[#2d2d2c] text-neutral-300 border-neutral-700",
-                  "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400",
+                  "rounded-full bg-secondary text-secondary-foreground border-border",
+                  "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-400",
                 )}
               >
                 <Forward />
@@ -133,9 +133,10 @@ export function Topbar() {
             <AlertDialogTrigger asChild>
               <Button
                 size={"icon-sm"}
+                aria-label="Delete conversation"
                 className={cn(
-                  "rounded-full bg-[#2d2d2c] text-neutral-300  border-neutral-700",
-                  "hover:text-rose-500 hover:bg-rose-100 hover:border-rose-400",
+                  "rounded-full bg-secondary text-secondary-foreground border-border",
+                  "hover:text-rose-500 hover:bg-rose-100 hover:border-rose-400 dark:hover:bg-rose-950 dark:hover:text-rose-400",
                 )}
               >
                 <Trash2 />
@@ -162,6 +163,15 @@ export function Topbar() {
           </AlertDialog>
         </>
       )}
+      <Button
+        size={"icon-sm"}
+        variant={"ghost"}
+        aria-label="Open settings"
+        onClick={() => router.push("/settings")}
+        className="rounded-full hover:bg-muted"
+      >
+        <Cog />
+      </Button>
     </div>
   );
 }

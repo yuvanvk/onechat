@@ -306,7 +306,7 @@ export const ChatInput = () => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-3xl border border-[#191919] dark:bg-[#121212] max-w-3xl w-full mx-auto px-3.5 py-3.5 gap-2 fixed",
+        "flex flex-col rounded-3xl border border-border bg-card max-w-3xl w-full mx-auto px-3.5 py-3.5 gap-2 fixed",
         id && "bottom-3 left-1/2 -translate-x-1/2",
         !id && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         isDraggingOver && "drag-active",
@@ -350,7 +350,7 @@ export const ChatInput = () => {
             size={"sm"}
             variant={"ghost"}
             aria-label="Attach file"
-            className="text-neutral-400"
+            className="text-muted-foreground"
             onClick={() => fileInputRef.current?.click()}
           >
             <Paperclip />

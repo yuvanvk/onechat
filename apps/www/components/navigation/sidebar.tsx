@@ -1,187 +1,65 @@
 "use client";
 
-import { motion } from "motion/react";
 import { useParams, useRouter } from "next/navigation";
-import { cn } from "@workspace/ui/lib/utils";
-import { useSidebar } from "@/store/useSidebar";
+import {
+  Sidebar,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+  SidebarMenuButton,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+} from "@workspace/ui/components/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@workspace/ui/components/dropdown-menu";
 import { ComponentProps, useEffect } from "react";
-import { Button } from "@workspace/ui/components/button";
 import { useConversationStore } from "@/store/useConversation";
-import { SidebarToggleIcon } from "@workspace/ui/components/unlumen-ui/sidebar-toggle-icon";
 import { useChatStore } from "@/store/useChat";
+import { Logo } from "../ui/logo";
+import { ChevronDown, CircleDashed } from "lucide-react";
 
-export const Sidebar = () => {
-
+export const AppSidebar = () => {
   const router = useRouter();
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const { conversations, fetch } = useConversationStore();
   const { setConversationId } = useChatStore();
 
   const { id } = useParams();
 
   useEffect(() => {
-    fetch()
-  }, [])
+    fetch();
+  }, [fetch]);
 
   return (
-    <motion.div
-      animate={{ x: open ? "0%" : "-103%" }}
-      transition={{
-        duration: 0.2,
-        ease: "easeIn",
-      }}
-      className={cn(
-        "flex flex-col max-w-[300px] w-full bg-[#121212] backdrop-blur-lg absolute left-2 inset-y-2 rounded-2xl overflow-hidden",
-      )}
-    >
+    <Sidebar variant="inset">
+      <SidebarHeader>
+        <SidebarTrigger />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Conversations</SidebarGroupLabel>
-          {conversations.length === 0 && (
-            <span className="text-sm text-neutral-500 text-center mt-6">
-              No chats found.
-            </span>
-          )}
-          {conversations.length > 0 &&
-            conversations.map((conversation, idx) => (
-              <SideBarItem 
-                key={idx}
-                isCurrent={conversation.id === id}
-                onClick={() => {
-                  setConversationId(conversation.id)
-                  router.push(`/c/${conversation.id}`)
-                }}
+          <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
+          <SidebarMenu>
+            {conversations.map((conversation) => (
+              <SidebarMenuItem
+                onClick={() => router.push(`/c/${conversation.id}`)}
+                key={conversation.id}
               >
-                {conversation.title.slice(0, conversation.title.length > 30 ? 30 : conversation.title.length)}...
-              </SideBarItem>
+                <SidebarMenuButton>
+                  <CircleDashed />
+                  {conversation.title}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             ))}
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-    </motion.div>
-  );
-};
-
-export const SidebarContent = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div className={cn("flex flex-col mt-18 px-2.5 py-10", className)}>
-      {children}
-    </div>
-  );
-};
-
-export const SidebarGroup = ({ children }: { children: React.ReactNode }) => {
-  return <div className={cn("flex flex-col")}>{children}</div>;
-};
-
-export const SidebarGroupLabel = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div className="flex items-start gap-2 mb-0.5">
-      <div className="flex flex-col gap-[7px]">
-        {[0, 1].map((_, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "h-px w-8",
-              idx === 0 ? "bg-neutral-100" : "bg-neutral-600",
-            )}
-          />
-        ))}
-      </div>
-      <div
-        className={cn(
-          "text-[15px] capitalize font-normal text-neutral-100 leading-0",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    </div>
-  );
-};
-
-export const SideBarItem = ({
-  children,
-  className,
-  isCurrent,
-  ...props
-}: ComponentProps<typeof Button> & {
-  isCurrent: boolean
-}) => {
-  const barVariants = {
-    rest: { width: "32px", backgroundColor: "var(--color-neutral-600)" },
-    hover: {
-      width: "32px",
-      backgroundColor: "var(--color-neutral-600)",
-    },
-  };
-
-  const middleBarVariants = {
-    rest: { width: isCurrent ? "45px" : "32px", backgroundColor: isCurrent ? "#00A6F4" : "#525252" },
-    hover: { width: "45px", backgroundColor: "#00A6F4" },
-  };
-
-  return (
-    <motion.div
-      initial="rest"
-      whileHover="hover"
-      animate="rest"
-      className={cn("flex items-center gap-2 cursor-pointer")}
-    >
-      <motion.div className={cn("flex flex-col gap-[7px]")}>
-        {[0, 1, 2].map((_, idx) => (
-          <motion.div
-            key={idx}
-            variants={idx === 1 ? middleBarVariants : barVariants}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className={cn("h-px")}
-          />
-        ))}
-      </motion.div>
-      <Button
-        variant={"ghost"}
-        className={cn(
-          "p-0 text-[15px] font-normal bg-transparent hover:bg-transparent! h-auto",
-          className,
-        )}
-        {...props}
-      >
-        <motion.span
-          variants={{
-            rest: { color: isCurrent ? "#00A6F4" : "var(--color-neutral-500)" },
-            hover: { color: "#00A6F4" },
-          }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-        >
-          {children}
-        </motion.span>
-      </Button>
-    </motion.div>
-  );
-};
-
-export const SidebarTrigger = ({ className }: { className?: string }) => {
-  const { open, setOpen } = useSidebar();
-
-  return (
-    <Button
-      size={"icon-lg"}
-      variant={"ghost"}
-      onClick={() => setOpen(open ? false : true)}
-      className={cn("absolute top-4 left-4 z-100", className)}
-    >
-      <SidebarToggleIcon isOpen={open} />
-    </Button>
+    </Sidebar>
   );
 };

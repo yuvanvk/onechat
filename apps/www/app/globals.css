@@ -1,14 +1,12 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import "../../../packages/ui/src/styles/globals.css";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
-
+@import "../../../packages/ui/src/styles/globals.css";
 
 .scrollbar-hidden {
-    scrollbar-width: none;        
-    -ms-overflow-style: none;
-  }
-  
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;      
-  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}

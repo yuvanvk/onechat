@@ -19,7 +19,7 @@ export const AttachmentChip = ({
       return (
         <div
           key={file.id}
-          className="w-8 h-8 rounded-xl flex items-center justify-center bg-neutral-800"
+          className="w-8 h-8 rounded-xl flex items-center justify-center bg-muted"
         >
           <Spinner />
         </div>
@@ -29,7 +29,7 @@ export const AttachmentChip = ({
         <div
           onClick={async () => await handleReUploadFile(file.name)}
           key={file.id}
-          className="w-8 h-8 rounded-xl flex items-center justify-center bg-neutral-800"
+          className="w-8 h-8 rounded-xl flex items-center justify-center bg-muted"
         >
           <RotateCcw size={18} className="text-blue-500" />
         </div>
@@ -60,7 +60,7 @@ export const AttachmentChip = ({
       ) : (
         <div
           key={file.id}
-          className="flex items-center gap-2 bg-neutral-800 text-neutral-400 p-2 rounded-xl relative"
+          className="flex items-center gap-2 bg-muted text-muted-foreground p-2 rounded-xl relative"
         >
           <FileText size={16} />
           <span className="text-xs ">{file.name}...</span>

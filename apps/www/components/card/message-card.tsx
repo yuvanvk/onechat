@@ -12,18 +12,18 @@ import { Button } from "@workspace/ui/components/button";
 import { Message, WebSocketRegenerateStreamMessage } from "@workspace/types";
 
 const PROSE_CLASSES = `
-  prose prose-invert prose-neutral max-w-none
-  prose-p:text-[15px] prose-p:leading-7 prose-p:text-neutral-100
-  prose-headings:text-neutral-100 prose-headings:font-medium
-  prose-strong:text-neutral-100
-  prose-code:text-neutral-200 prose-code:px-1 prose-code:py-0.5
+  prose prose-neutral dark:prose-invert max-w-none
+  prose-p:text-[15px] prose-p:leading-7 prose-p:text-foreground
+  prose-headings:text-foreground prose-headings:font-medium
+  prose-strong:text-foreground
+  prose-code:text-foreground prose-code:px-1 prose-code:py-0.5
   prose-code:rounded prose-code:text-[13px]
   prose-code:before:content-none prose-code:after:content-none
-  prose-pre:bg-neutral-900 prose-pre:border prose-pre:border-neutral-800
-  prose-li:text-neutral-100 prose-li:text-[15px]
+  prose-pre:bg-muted prose-pre:border prose-pre:border-border
+  prose-li:text-foreground prose-li:text-[15px]
   prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-  prose-blockquote:border-neutral-700 prose-blockquote:text-neutral-400
-  prose-hr:border-neutral-800
+  prose-blockquote:border-border prose-blockquote:text-muted-foreground
+  prose-hr:border-border
 `.trim();
 
 const getImageUrl = (key: string) =>
@@ -32,7 +32,7 @@ const getImageUrl = (key: string) =>
 function ThinkingIndicator({ loaderText = "Thinking..."}: { loaderText?: string }) {
   return (
     <motion.span
-      className="bg-linear-to-r from-zinc-500 via-zinc-100 to-zinc-500 bg-clip-text text-transparent text-[13px] flex items-center gap-1"
+      className="bg-linear-to-r from-muted-foreground via-foreground to-muted-foreground bg-clip-text text-transparent text-[13px] flex items-center gap-1"
       style={{ backgroundSize: "200% 100%" }}
       animate={{ backgroundPositionX: ["0%", "200%"] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
@@ -154,10 +154,10 @@ export function MessageCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
         className={cn(
-          "text-neutral-100 text-[15px]",
+          "text-foreground text-[15px]",
           isUser
             ? content &&
-                "w-fit max-w-xs px-2 py-1.5 bg-neutral-800 rounded-xl ml-auto"
+                "w-fit max-w-xs px-2 py-1.5 bg-muted rounded-xl ml-auto"
             : "max-w-2xl w-full p-1.5 mr-auto",
         )}
       >

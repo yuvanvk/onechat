@@ -30,7 +30,7 @@ export const Chat = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-[#080808] h-full">
+    <div className="flex flex-col min-h-screen w-full bg-background h-full">
       <Topbar />
       {id && (
         <ScrollArea className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-3 pb-27.5 h-full flex flex-col">
