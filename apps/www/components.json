@@ -7,19 +7,19 @@
     "config": "",
     "css": "app/globals.css",
     "baseColor": "neutral",
-    "cssVariables": true
+    "cssVariables": true,
+    "prefix": ""
   },
   "iconLibrary": "lucide",
+  "rtl": false,
   "aliases": {
     "components": "@/components",
-    "utils": "@workspace/ui/lib/utils",
-    "ui": "@workspace/ui/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "registries": {
-    "@react-bits": "https://reactbits.dev/r/{name}.json",
-    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json",
-    "@shadcnblocks": "https://shadcnblocks.com/r/{name}.json"
-  }
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
 }

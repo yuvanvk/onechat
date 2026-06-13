@@ -3,13 +3,13 @@
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { Paperclip } from "lucide-react";
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { useChatStore } from "@/store/useChat";
 import { AttachmentChip } from "./attachment-chip";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "@workspace/ui/components/button";
-import { Textarea } from "@workspace/ui/components/textarea";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
 import { uploadToBucket } from "@/utils/upload-to-bucket";

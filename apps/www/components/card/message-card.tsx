@@ -3,12 +3,12 @@
 import Image from "next/image";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { Copy, RotateCcw } from "lucide-react";
 import { useChatStore } from "@/store/useChat";
 import { AnimatePresence, motion } from "motion/react";
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@/components/ui/button";
 import { Message, WebSocketRegenerateStreamMessage } from "@workspace/types";
 
 const PROSE_CLASSES = `

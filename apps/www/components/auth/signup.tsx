@@ -5,10 +5,10 @@ import { memo, useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
-import { cn } from "@workspace/ui/lib/utils";
-import { Label } from "@workspace/ui/components/label";
-import { Input } from "@workspace/ui/components/input";
-import { Button } from "@workspace/ui/components/button";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
 

@@ -1,5 +1,5 @@
 "use client"
-import { Skeleton } from "@workspace/ui/components/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const MessageSkeleton = [
     {

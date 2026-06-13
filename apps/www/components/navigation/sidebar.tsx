@@ -12,13 +12,13 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
-} from "@workspace/ui/components/sidebar";
+} from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { ComponentProps, useEffect } from "react";
 import { useConversationStore } from "@/store/useConversation";
 import { useChatStore } from "@/store/useChat";

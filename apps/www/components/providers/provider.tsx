@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "./theme-provider";
-import { TooltipProvider } from "@workspace/ui/components/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Provider({ children }: { children: React.ReactNode }) {
   return (

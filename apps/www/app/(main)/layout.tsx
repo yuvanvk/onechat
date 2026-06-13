@@ -1,7 +1,8 @@
 
 import { CommandBox } from "@/components/navigation/command";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@workspace/ui/components/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/navigation/sidebar";
+
 export default function MainLayout({
   children,
 }: {
@@ -9,13 +10,11 @@ export default function MainLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="relative w-full">
-        <CommandBox />
-        <AppSidebar />
-        <SidebarInset className="w-full">
-          {children}
-        </SidebarInset>
-      </div>
+      <CommandBox />
+      <AppSidebar />
+      <SidebarInset className="w-full">
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

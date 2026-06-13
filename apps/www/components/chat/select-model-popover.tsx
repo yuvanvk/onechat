@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useModel } from "@/store/useModel";
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
-import { Input } from "@workspace/ui/components/input";
-import { Button } from "@workspace/ui/components/button";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { SELECT_MODELS } from "@/lib/supported-models/models";
 import {
   Bot,
@@ -23,7 +23,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
+} from "@/components/ui/tooltip";
 
 export const SelectModelPopover = () => {
   const { setModelName, setModel, modelName } = useModel();

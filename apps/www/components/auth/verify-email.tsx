@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MailOpen, ShieldBan } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@/components/ui/button";
 
 export const VerifyEmail = () => {
   const router = useRouter();
