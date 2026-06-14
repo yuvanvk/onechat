@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Cog, Forward, Trash2 } from "lucide-react";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { Forward, Trash2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/store/useChat";
+import { SelectModelPopover } from "../chat/select-model-popover";
 
 export function Topbar() {
   const { id } = useParams();
@@ -35,8 +36,9 @@ export function Topbar() {
   const { setMessages } = useChatStore();
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
-  const path = usePathname();
-  const isConversationPage = path.startsWith("/c/");
+
+  console.log(id);
+  
 
   async function handleDelete() {
     if (!id) return;
@@ -86,18 +88,19 @@ export function Topbar() {
   return (
     <div
       className={cn(
-        "fixed right-3 top-3 z-50 flex items-center gap-1 rounded-full border border-border/70 bg-background/85 p-1 text-foreground shadow-sm backdrop-blur-md",
+        "fixed z-50 top-0 flex items-center justify-between p-1 text-foreground shadow-sm backdrop-blur-md border-b border-r w-full max-w-[85vw] h-12",
       )}
     >
-      {isConversationPage && (
-        <>
+      <SelectModelPopover />
+      {id && (
+        <div className="w-fit flex items-center gap-1 shrink-0 ml-10">
           <Dialog>
             <DialogTrigger asChild onClick={handleShareLinkGeneration}>
               <Button
                 size={"icon-sm"}
                 aria-label="Share conversation"
                 className={cn(
-                  "rounded-full bg-secondary text-secondary-foreground border-border",
+                  "rounded-full bg-secondary text-secondary-foreground border border-neutral-700 cursor-pointer",
                   "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-400",
                 )}
               >
@@ -135,7 +138,7 @@ export function Topbar() {
                 size={"icon-sm"}
                 aria-label="Delete conversation"
                 className={cn(
-                  "rounded-full bg-secondary text-secondary-foreground border-border",
+                  "rounded-full bg-secondary text-secondary-foreground border border-neutral-700 cursor-pointer",
                   "hover:text-rose-500 hover:bg-rose-100 hover:border-rose-400 dark:hover:bg-rose-950 dark:hover:text-rose-400",
                 )}
               >
@@ -161,17 +164,8 @@ export function Topbar() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </>
+        </div>
       )}
-      <Button
-        size={"icon-sm"}
-        variant={"ghost"}
-        aria-label="Open settings"
-        onClick={() => router.push("/settings")}
-        className="rounded-full hover:bg-muted"
-      >
-        <Cog />
-      </Button>
     </div>
   );
 }

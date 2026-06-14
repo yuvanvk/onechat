@@ -9,7 +9,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="bg-black!">
       <CommandBox />
       <AppSidebar />
       <SidebarInset className="w-full">

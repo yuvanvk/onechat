@@ -96,7 +96,7 @@ export const SelectModelPopover = () => {
             transition={{ ease: "easeInOut", duration: 0.1 }}
             className={cn(
               "w-112.5 min-h-125 max-h-125 rounded-xl bg-popover text-popover-foreground border border-border overflow-hidden",
-              "absolute bottom-9 flex flex-col gap-2",
+              "absolute -bottom-130 left-1 flex flex-col gap-2",
             )}
           >
             {/* Top Search Bar and filter */}

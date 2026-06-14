@@ -306,9 +306,8 @@ export const ChatInput = () => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-3xl border border-border bg-card max-w-3xl w-full mx-auto px-3.5 py-3.5 gap-2 fixed",
-        id && "bottom-3 left-1/2 -translate-x-1/2",
-        !id && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        "flex flex-col rounded-xl border border-accent bg-[#121212] max-w-3xl w-full mx-auto p-1 gap-2 absolute",
+        "bottom-2 left-1/2 -translate-x-1/2",
         isDraggingOver && "drag-active",
       )}
     >
@@ -332,7 +331,7 @@ export const ChatInput = () => {
         placeholder="Ask anything..."
         onChange={handleChange}
         className={cn(
-          "bg-transparent! border-none focus:ring-0! px-1 text-[15px]! resize-none! min-h-0! rounded-none ml-2",
+          "bg-transparent! border-none focus:ring-0! text-[14px]! resize-none! min-h-0! rounded-none",
         )}
       />
 
@@ -357,15 +356,12 @@ export const ChatInput = () => {
           </Button>
         </>
 
-        <div className={cn("flex items-center gap-1.5")}>
-          {/* Select Models */}
-          <SelectModelPopover />
-
+        <div className={cn("flex items-center gap-1.5 pb-1 px-1")}>
           <Button
-            size={"icon"}
+            size={"icon-sm"}
             disabled={!hasInput}
             onClick={handleAIResponse}
-            className={cn(" rounded-full")}
+            className={cn(" rounded-lg")}
           >
             <motion.div
               animate={{ rotate: hasInput ? "-90deg" : "0deg" }}
