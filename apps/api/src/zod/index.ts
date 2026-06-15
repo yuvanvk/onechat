@@ -9,6 +9,13 @@ export const ChatSchema = z.object({
     conversationId: z.string().optional()
 });
 
+export const FavouriteSchema = z.object({
+    modelId: z.string().min(1),
+    displayName: z.string().min(1),
+    description: z.string().min(1),
+    capabilites: z.array(z.string()),
+})
+
 
 export const ImageSchema = z.object({
     prompt: z.string().max(MAXIUMUM_INPUT_CHARACTERS).min(1),

@@ -46,20 +46,27 @@ export const CommandBox = () => {
         event.preventDefault();
         setOpen(!open);
       }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        setTheme(theme === "light" ? "dark" : "light");
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, setOpen]);
+  }, [open, setOpen, theme]);
 
   if (!mounted) {
     return null;
   }
 
   const createConversation = async () => {
-    const response = await window.fetch("http://localhost:8787/api/v1/ai/create", {
-      method: "POST",
-    });
+    const response = await window.fetch(
+      "http://localhost:8787/api/v1/ai/create",
+      {
+        method: "POST",
+      },
+    );
     const { data, message } = await response.json();
 
     if (!response.ok || !data?.conversationId) {
@@ -107,7 +114,11 @@ export const CommandBox = () => {
   const ThemeIcon = theme === "dark" ? Sun : Moon;
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} className="min-w-md w-full">
+    <CommandDialog
+      open={open}
+      onOpenChange={setOpen}
+      className="min-w-md w-full"
+    >
       <Command>
         <CommandInput placeholder="Type a command or search..." />
         <CommandList>

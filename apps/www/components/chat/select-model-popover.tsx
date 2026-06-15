@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useModel } from "@/store/useModel";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SELECT_MODELS } from "@/lib/supported-models/models";
+
 import {
   Bot,
   Brain,
@@ -26,18 +26,28 @@ import {
 } from "@/components/ui/tooltip";
 
 export const SelectModelPopover = () => {
-  const { setModelName, setModel, modelName } = useModel();
+  const {
+    setModelName,
+    setModel,
+    modelName,
+    supportedModels,
+    addToFavourites,
+    removeFromFavourites,
+    fetch: fetchFavourites,
+  } = useModel();
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [provider, setProvider] = useState("favourites");
 
   const hasSearch = search.length > 0;
+  console.log(supportedModels[0].favourites);
+  
 
-  const modelsToDisplayBasedOnProvider = SELECT_MODELS.filter(
-    (x) => x.id == provider,
-  ).flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
+  const modelsToDisplayBasedOnProvider = supportedModels
+    .filter((x) => x.id == provider)
+    .flatMap((x) => (provider === "favourites" ? x.favourites : x.models));
 
-  const modelsBasedOnSearch = SELECT_MODELS.flatMap((provider) =>
+  const modelsBasedOnSearch = supportedModels.flatMap((provider) =>
     (provider.models ?? []).filter(
       (m) =>
         m.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -49,6 +59,10 @@ export const SelectModelPopover = () => {
   const displayModels = hasSearch
     ? modelsBasedOnSearch
     : modelsToDisplayBasedOnProvider;
+
+  useEffect(() => {
+    fetchFavourites();
+  }, []);
 
   return (
     <div className="relative w-fit">
@@ -129,7 +143,7 @@ export const SelectModelPopover = () => {
                     "flex flex-col gap-7 items-center py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >
-                  {SELECT_MODELS.map((model, idx) => {
+                  {supportedModels.map((model, idx) => {
                     const Icon = model.icon;
                     return (
                       <div key={idx} className="relative">
@@ -181,8 +195,8 @@ export const SelectModelPopover = () => {
                       <div
                         key={model?.id}
                         onClick={() => {
-                          setModel(model?.id!)
-                          setModelName(model?.displayName!)
+                          setModel(model?.id!);
+                          setModelName(model?.displayName!);
                         }}
                         className="flex flex-col select-none cursor-pointer"
                       >
@@ -192,22 +206,25 @@ export const SelectModelPopover = () => {
                               {model?.displayName}
                             </div>
                             <Button
-                              onClick={() =>
-                                SELECT_MODELS[0].favourites?.push(model!)
-                              }
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                supportedModels[0].favourites!.some((f) => f.id === model?.id)
+                                  ? removeFromFavourites(model?.id!)
+                                  : addToFavourites(model!);
+                              }}
                               size={"icon-sm"}
                               variant={"ghost"}
                             >
                               <Star
                                 stroke={
-                                  SELECT_MODELS[0].favourites?.find(
+                                  supportedModels[0].favourites?.find(
                                     (x) => x.id == model?.id,
                                   )
                                     ? "#FFD700"
                                     : "#A3A3A3"
                                 }
                                 fill={
-                                  SELECT_MODELS[0].favourites?.find(
+                                  supportedModels[0].favourites?.find(
                                     (x) => x.id == model?.id,
                                   )
                                     ? "#FFD700"
@@ -218,8 +235,10 @@ export const SelectModelPopover = () => {
                             </Button>
                           </div>
 
-                          <div className="flex items-center gap-2 bg-neutral-200
-                          dark:bg-neutral-800 px-1 py-1 rounded-lg text-neutral-600 dark:text-neutral-300">
+                          <div
+                            className="flex items-center gap-2 bg-neutral-200
+                          dark:bg-neutral-800 px-1 py-1 rounded-lg text-neutral-600 dark:text-neutral-300"
+                          >
                             {model?.capabilities &&
                               model?.capabilities.map((cap, idx) => {
                                 const size = 12;
@@ -228,7 +247,7 @@ export const SelectModelPopover = () => {
                                     return (
                                       <Tooltip key={idx}>
                                         <TooltipTrigger>
-                                          <Code2 size={size}  />
+                                          <Code2 size={size} />
                                         </TooltipTrigger>
                                         <TooltipContent>{cap}</TooltipContent>
                                       </Tooltip>
@@ -256,7 +275,7 @@ export const SelectModelPopover = () => {
                                     return (
                                       <Tooltip key={idx}>
                                         <TooltipTrigger>
-                                          <Eye size={size}  />
+                                          <Eye size={size} />
                                         </TooltipTrigger>
                                         <TooltipContent>{cap}</TooltipContent>
                                       </Tooltip>
@@ -265,9 +284,7 @@ export const SelectModelPopover = () => {
                                     return (
                                       <Tooltip key={idx}>
                                         <TooltipTrigger>
-                                          <IoChatbubbleOutline
-                                            size={size}
-                                          />
+                                          <IoChatbubbleOutline size={size} />
                                         </TooltipTrigger>
                                         <TooltipContent>{cap}</TooltipContent>
                                       </Tooltip>
@@ -276,7 +293,7 @@ export const SelectModelPopover = () => {
                                     return (
                                       <Tooltip key={idx}>
                                         <TooltipTrigger>
-                                          <Globe size={size}  />
+                                          <Globe size={size} />
                                         </TooltipTrigger>
                                         <TooltipContent>{cap}</TooltipContent>
                                       </Tooltip>
@@ -285,7 +302,7 @@ export const SelectModelPopover = () => {
                                     return (
                                       <Tooltip key={idx}>
                                         <TooltipTrigger>
-                                          <Bot size={size}  />
+                                          <Bot size={size} />
                                         </TooltipTrigger>
                                         <TooltipContent>{cap}</TooltipContent>
                                       </Tooltip>

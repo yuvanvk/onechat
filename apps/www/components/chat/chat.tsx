@@ -31,6 +31,11 @@ export const Chat = () => {
   return (
     <div className="flex flex-col bg-background h-full w-full">
       <Topbar />
+      {!id && (
+        <div className="flex items-center justify-center h-screen">
+          {/* hi */}
+        </div>
+      )}
       {id && (
         <div className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-14 pb-21 h-full flex flex-col overflow-y-auto">
           {isLoading ? (

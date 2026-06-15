@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OneChat by Slavan",
+  title: "OneChat",
   description: "The all-in-one AI chat platform. Access multiple AI models in one place.",
   keywords: ["AI", "chat", "assistant", "GPT", "Claude", "Gemini"],
   authors: [{ name: "OneChat" }],
