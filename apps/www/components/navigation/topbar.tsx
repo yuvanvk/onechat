@@ -29,16 +29,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/store/useChat";
 import { SelectModelPopover } from "../chat/select-model-popover";
+import { SidebarTrigger, useSidebar } from "../ui/sidebar";
 
 export function Topbar() {
   const { id } = useParams();
   const router = useRouter();
+  const { open, isMobile } = useSidebar();
   const { setMessages } = useChatStore();
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
 
   console.log(id);
-  
 
   async function handleDelete() {
     if (!id) return;
@@ -88,19 +89,22 @@ export function Topbar() {
   return (
     <div
       className={cn(
-        "fixed z-50 top-0 flex items-center justify-between p-1 text-foreground shadow-sm backdrop-blur-md border-b border-r w-full max-w-[85vw] h-12",
+        "absolute z-50 top-0 right-0 flex items-center justify-between p-1 text-foreground  backdrop-blur-md w-full border-b max-w-full h-12 bg-background",
       )}
     >
-      <SelectModelPopover />
+      <div className="flex items-center gap-1">
+        {(!open || isMobile) && <SidebarTrigger />}
+        <SelectModelPopover />
+      </div>
       {id && (
-        <div className="w-fit flex items-center gap-1 shrink-0 ml-10">
+        <div className="w-fit flex items-center gap-1 shrink-0 mr-1">
           <Dialog>
             <DialogTrigger asChild onClick={handleShareLinkGeneration}>
               <Button
                 size={"icon-sm"}
                 aria-label="Share conversation"
                 className={cn(
-                  "rounded-full bg-secondary text-secondary-foreground border border-neutral-700 cursor-pointer",
+                  "rounded-lg bg-secondary text-secondary-foreground border-neutral-300 dark:border-neutral-700 cursor-pointer",
                   "hover:text-blue-500 hover:bg-blue-100 hover:border-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-400",
                 )}
               >
@@ -138,7 +142,7 @@ export function Topbar() {
                 size={"icon-sm"}
                 aria-label="Delete conversation"
                 className={cn(
-                  "rounded-full bg-secondary text-secondary-foreground border border-neutral-700 cursor-pointer",
+                  "rounded-lg bg-secondary text-secondary-foreground border border-neutral-300 dark:border-neutral-700 cursor-pointer",
                   "hover:text-rose-500 hover:bg-rose-100 hover:border-rose-400 dark:hover:bg-rose-950 dark:hover:text-rose-400",
                 )}
               >

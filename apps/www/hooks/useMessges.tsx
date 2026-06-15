@@ -14,7 +14,6 @@ export function useMessage(id: string) {
     if (pendingMessage !== null) return;
 
     const abortController = new AbortController();
-
     const fetchConversationMessages = async () => {
       setIsLoading(true);
       setError(null);
@@ -25,7 +24,6 @@ export function useMessage(id: string) {
         );
         const { data, message } = await response.json();
 
-        toast(message);
         setMessages(data.messages ?? []);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {

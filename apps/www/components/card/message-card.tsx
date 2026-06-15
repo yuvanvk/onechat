@@ -5,7 +5,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
-import { Copy, RotateCcw } from "lucide-react";
+import { Copy, RotateCcw, Download } from "lucide-react";
 import { useChatStore } from "@/store/useChat";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -45,19 +45,28 @@ function ThinkingIndicator({ loaderText = "Thinking..."}: { loaderText?: string 
 
 function MessageActions({
   onCopy,
+  onDownload,
   showRegenerate,
   onRegenerate,
 }: {
-  onCopy: () => void;
+  onCopy?: () => void;
+  onDownload?: () => Promise<void>;
   onRegenerate?: () => Promise<void>;
   showRegenerate?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1">
-      <Button size="icon-xs" variant="ghost" onClick={onCopy}>
-        <Copy />
-      </Button>
-      {showRegenerate && (
+      {onCopy && (
+        <Button size="icon-xs" variant="ghost" onClick={onCopy}>
+          <Copy />
+        </Button>
+      )}
+      {onDownload && (
+        <Button size="icon-sm" variant="ghost" onClick={onDownload}>
+          <Download />
+        </Button>
+      )}
+      {showRegenerate && onRegenerate && (
         <Button size="icon-xs" variant="ghost" onClick={onRegenerate}>
           <RotateCcw />
         </Button>
@@ -103,6 +112,29 @@ export function MessageCard({
     };
     send(regenerateMessage);
     console.log("processed");
+  }
+
+  async function handleDownload() {
+    if (!imageKey) return;
+
+    try {
+      const response = await window.fetch(getImageUrl(encodeURIComponent(imageKey)));
+      if (!response.ok) {
+        throw new Error("Failed to download image");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${imageKey}.png`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Image download failed:", error);
+    }
   }
 
   return (
@@ -181,6 +213,7 @@ export function MessageCard({
                 alt={imageKey}
                 width={400}
                 height={400}
+                className="rounded-lg object-cover"
               />
             )
           )
@@ -199,11 +232,18 @@ export function MessageCard({
         </motion.div>
       )}
 
-      {!isUser && content && (
+      {!isUser && messageType === "text" && content && (
         <MessageActions
           onCopy={handleCopy}
           onRegenerate={handleRegenerate}
           showRegenerate
+        />
+      )}
+
+      {!isUser && messageType !== "text" && imageKey && (
+        <MessageActions
+          onDownload={handleDownload}
+          onRegenerate={handleRegenerate}
         />
       )}
     </div>

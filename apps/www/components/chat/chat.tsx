@@ -9,7 +9,6 @@ import { useMessage } from "@/hooks/useMessges";
 import { Topbar } from "@/components/navigation/topbar";
 import { MessageCard } from "@/components/card/message-card";
 import { useConversationStore } from "@/store/useConversation";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
 
 export const Chat = () => {
@@ -23,7 +22,7 @@ export const Chat = () => {
       setConversationId(id as string);
     }
     fetch();
-  }, [id]);
+  }, [id, setConversationId, fetch]);
 
   if (error) {
     toast.error(error);
@@ -33,7 +32,7 @@ export const Chat = () => {
     <div className="flex flex-col bg-background h-full w-full">
       <Topbar />
       {id && (
-        <ScrollArea className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-13 pb-21 h-full flex flex-col">
+        <div className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-14 pb-21 h-full flex flex-col overflow-y-auto">
           {isLoading ? (
             <ChatSkeleton />
           ) : (
@@ -43,7 +42,9 @@ export const Chat = () => {
                   <MessageCard
                     id={message.id}
                     key={idx}
-                    messageType={message.messageType ?? (message as any).message_type}
+                    messageType={
+                      message.messageType ?? (message as any).message_type
+                    }
                     content={message.content}
                     role={message.role}
                     pdfs={message.pdfs}
@@ -59,7 +60,7 @@ export const Chat = () => {
                 ))}
             </>
           )}
-        </ScrollArea>
+        </div>
       )}
       <ChatInput />
     </div>

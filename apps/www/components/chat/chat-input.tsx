@@ -306,7 +306,7 @@ export const ChatInput = () => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-xl border border-accent bg-[#121212] max-w-3xl w-full mx-auto p-1 gap-2 absolute",
+        "flex flex-col rounded-xl border border-neutral-300 dark:border-accent bg-white dark:bg-[#121212] max-w-3xl w-full mx-auto p-1 gap-2 absolute",
         "bottom-2 left-1/2 -translate-x-1/2",
         isDraggingOver && "drag-active",
       )}

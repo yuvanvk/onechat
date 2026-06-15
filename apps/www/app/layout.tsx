@@ -13,42 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OneChat - All in One AI Chat",
+  title: "OneChat by Slavan",
   description: "The all-in-one AI chat platform. Access multiple AI models in one place.",
   keywords: ["AI", "chat", "assistant", "GPT", "Claude", "Gemini"],
   authors: [{ name: "OneChat" }],
   creator: "OneChat",
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://onechat.app",
-    siteName: "OneChat",
-    title: "OneChat - All in One AI Chat",
-    description: "The all-in-one AI chat platform. Access multiple AI models in one place.",
-    images: [
-      {
-        url: "https://onechat.app/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "OneChat",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "OneChat - All in One AI Chat",
-    description: "The all-in-one AI chat platform. Access multiple AI models in one place.",
-    images: ["https://onechat.app/og-image.png"],
-  },
   icons: {
     icon: "/logo.svg",
     apple: "/apple-icon.png",
-  },
-  manifest: "/manifest.json",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
   },
 };
 
@@ -65,7 +37,9 @@ export default function RootLayout({
     >
       <body className="selection:bg-primary selection:text-primary-foreground font-sans">
         <Provider>{children}</Provider>
-        <Toaster />
+        <Toaster position="top-right" offset={5} closeButton toastOptions={{
+          className: "border dark:bg-[#121212]! border-neutral-800! shadow-sm! rounded-xl!"
+        }}/>
       </body>
     </html>
   );

@@ -39,7 +39,7 @@ export default function SharedConversationPage() {
   return (
     <>
       {shareId && (
-        <ScrollArea className="h-screen  max-w-3xl mx-auto w-full px-4 pt-3 flex flex-col">
+        <div className="h-screen  max-w-3xl mx-auto w-full px-4 pt-3 flex flex-col overflow-y-auto">
           {loading ? (
             <ChatSkeleton />
           ) : (
@@ -47,16 +47,25 @@ export default function SharedConversationPage() {
               {messages.length > 0 &&
                 messages.map((message, idx) => (
                   <MessageCard
+                    id={message.id}
                     key={idx}
+                    messageType={message.messageType ?? (message as any).message_type}
                     content={message.content}
-                    images={JSON.parse(message.images as unknown as string).filter(Boolean)}
-                    pdfs={message.pdfs}
                     role={message.role}
+                    pdfs={message.pdfs}
+                    imageKey={message.imageKey ?? (message as any).image_key}
+                    images={
+                      typeof message.images === "string"
+                        ? JSON.parse(
+                            message.images as unknown as string,
+                          ).filter(Boolean)
+                        : message.images
+                    }
                   />
                 ))}
             </>
           )}
-        </ScrollArea>
+        </div>
       )}
     </>
   );

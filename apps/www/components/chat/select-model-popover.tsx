@@ -125,7 +125,7 @@ export const SelectModelPopover = () => {
               {!hasSearch && (
                 <div
                   className={cn(
-                    "absolute inset-y-0 bg-background-muted w-15 rounded-tr-xl border-r border-t border-neutral-800",
+                    "absolute inset-y-0 bg-background-muted w-15 rounded-tr-xl border-r border-t border-neutral-300 dark:border-neutral-800",
                     "flex flex-col gap-7 items-center py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >
@@ -218,7 +218,8 @@ export const SelectModelPopover = () => {
                             </Button>
                           </div>
 
-                          <div className="flex items-center gap-2 bg-neutral-800 px-1 py-1 rounded-lg text-neutral-300">
+                          <div className="flex items-center gap-2 bg-neutral-200
+                          dark:bg-neutral-800 px-1 py-1 rounded-lg text-neutral-600 dark:text-neutral-300">
                             {model?.capabilities &&
                               model?.capabilities.map((cap, idx) => {
                                 const size = 12;
