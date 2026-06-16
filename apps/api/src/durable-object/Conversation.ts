@@ -203,11 +203,13 @@ export class Conversation extends DurableObject<Env> {
         }
       }
       contentBlock.push({ type: "text", text: content });
+      let dup = [...this.messages];
+      const history = dup.slice(0, -1).map((message) => ({ role: message.role, content: message.content }))
       const stream = (await this.env.AI.run(
         model,
         {
           messages: [
-            ...this.messages.slice(0, -1),
+            ...history,
             {
               role,
               content: contentBlock,
@@ -384,7 +386,43 @@ export class Conversation extends DurableObject<Env> {
     const messageIndex = this.messages.findIndex((m) => m.id === messageId);
     const historyUpToMessage = this.messages.slice(0, messageIndex);
 
+    let estimatedCredits = 0;
+    let isReserved = false;
     try {
+      const hasAccess = await User.hasAccess(
+        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+        model,
+      );
+      if (!hasAccess) {
+        this.sendErrorMessage(
+          ws,
+          "Please Upgrade to Pro to access these models",
+          conversationId,
+        );
+        return;
+      }
+
+      const estimatedInputTokens = Model.estimateInputTokens(content);
+      const estimatedOutputTokens = Model.estimateOutputTokens();
+      estimatedCredits = Credit.calculate(
+        model,
+        estimatedInputTokens,
+        estimatedOutputTokens,
+      );
+
+      isReserved = await Credit.reserve(
+        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+        estimatedCredits,
+      );
+      if (!isReserved) {
+        this.sendErrorMessage(
+          ws,
+          "Insufficient credits",
+          conversationId,
+        );
+        return;
+      }
+
       const stream = (await this.env.AI.run(
         model,
         {
@@ -407,6 +445,8 @@ export class Conversation extends DurableObject<Env> {
       let buffer = "";
       let fullContent = "";
       let isDone = false;
+      let actualInputTokens = 0;
+      let actualOutputTokens = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -429,6 +469,17 @@ export class Conversation extends DurableObject<Env> {
           if (!dataLine) continue;
 
           const json = JSON.parse(dataLine.slice(6));
+
+          if (json.usage) {
+            actualInputTokens =
+              json.usage.prompt_tokens ??
+              json.usage.input_tokens ??
+              actualInputTokens;
+            actualOutputTokens =
+              json.usage.completion_tokens ??
+              json.usage.output_tokens ??
+              actualOutputTokens;
+          }
 
           const token =
             json.response ?? json.choices?.[0]?.delta?.content ?? "";
@@ -462,8 +513,25 @@ export class Conversation extends DurableObject<Env> {
 
         this.ctx.storage.sql.exec(UpdateMessageContent, fullContent, messageId);
         ws.send(JSON.stringify(regenerateStreamDoneMessage));
+
+        const actualCredits = Credit.calculate(
+          model,
+          actualInputTokens,
+          actualOutputTokens,
+        );
+        await Credit.settle(
+          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+          estimatedCredits,
+          actualCredits,
+        );
       }
     } catch (error) {
+      if (isReserved) {
+        await Credit.release(
+          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+          estimatedCredits,
+        );
+      }
       console.log(error);
     }
   }
@@ -471,19 +539,47 @@ export class Conversation extends DurableObject<Env> {
   async handleGenerateImage(ws: WebSocket, message: WebSocketGenerateImage) {
     this.abortController = new AbortController();
     const { model, content, conversationId, role } = message;
-    console.log("inside generate image");
-    
-    const userMessageId: string = crypto.randomUUID();
-    let currentUserMessage: Message = {
-      id: userMessageId,
-      role,
-      messageType: "text",
-      content,
-    };
 
-    this.messages = [...this.messages, currentUserMessage];
-
+    let estimatedCredits = 0;
+    let isReserved = false;
     try {
+      const hasAccess = await User.hasAccess(
+        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+        model,
+      );
+      if (!hasAccess) {
+        this.sendErrorMessage(
+          ws,
+          "Please Upgrade to Pro to access these models",
+          conversationId,
+        );
+        return;
+      }
+
+      estimatedCredits = Credit.calculateImageCredits(model);
+      isReserved = await Credit.reserve(
+        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+        estimatedCredits,
+      );
+      if (!isReserved) {
+        this.sendErrorMessage(
+          ws,
+          "Insufficient credits",
+          conversationId,
+        );
+        return;
+      }
+
+      const userMessageId: string = crypto.randomUUID();
+      let currentUserMessage: Message = {
+        id: userMessageId,
+        role,
+        messageType: "text",
+        content,
+      };
+
+      this.messages = [...this.messages, currentUserMessage];
+
       const response = await this.env.AI.run(
         model,
         {
@@ -552,8 +648,21 @@ export class Conversation extends DurableObject<Env> {
       );
 
       ws.send(JSON.stringify(imageGeneratedImage));
+
+      const actualCredits = Credit.calculateImageCredits(model);
+      await Credit.settle(
+        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+        estimatedCredits,
+        actualCredits,
+      );
     } catch (error) {
-      console.log("Error in handleGenerateImage ->", error);
+      if (isReserved) {
+        await Credit.release(
+          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+          estimatedCredits,
+        );
+      }
+      console.error("Error in handleGenerateImage ->", error);
       this.sendErrorMessage(ws, "Unable to Generate Image", conversationId);
     }
   }

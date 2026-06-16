@@ -26,11 +26,14 @@ export interface ModelRate {
     | "xai"
     | "deepseek"
     | "alibaba"
-    | "moonshotai";
+    | "moonshotai"
+    | "recraft"
+    | "black-forest-labs";
   rawInputRateUSD: number;
   rawOutputRateUSD: number;
   inputRateUSD: number;
   outputRateUSD: number;
+  imageRateUSD?: number;
   markupMultiplier: number;
   minTier: "free" | "pro";
   usecase: "text" | "image";
@@ -506,6 +509,83 @@ export const modelRates: ModelRate[] = [
     minTier: "pro",
     usecase: "text",
   },
+
+  // ─────────────────────────────────────────
+  // IMAGE GENERATION MODELS
+  // ─────────────────────────────────────────
+
+  {
+    modelId: "openai/gpt-image-1.5",
+    provider: "openai",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.04,
+    markupMultiplier: 1.0,
+    minTier: "pro",
+    usecase: "image",
+  },
+  {
+    modelId: "google/imagen-4",
+    provider: "google",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.04,
+    markupMultiplier: 1.0,
+    minTier: "pro",
+    usecase: "image",
+  },
+  {
+    modelId: "recraft/recraftv4-pro",
+    provider: "recraft",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.04,
+    markupMultiplier: 1.0,
+    minTier: "pro",
+    usecase: "image",
+  },
+  {
+    modelId: "recraft/recraftv4-vector",
+    provider: "recraft",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.04,
+    markupMultiplier: 1.0,
+    minTier: "pro",
+    usecase: "image",
+  },
+  {
+    modelId: "black-forest-labs/flux-2-pro-preview",
+    provider: "black-forest-labs",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.05,
+    markupMultiplier: 1.0,
+    minTier: "pro",
+    usecase: "image",
+  },
+  {
+    modelId: "@cf/black-forest-labs/flux-1-schnell",
+    provider: "black-forest-labs",
+    rawInputRateUSD: 0,
+    rawOutputRateUSD: 0,
+    inputRateUSD: 0,
+    outputRateUSD: 0,
+    imageRateUSD: 0.01,
+    markupMultiplier: 1.0,
+    minTier: "free",
+    usecase: "image",
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -526,6 +606,14 @@ export function calculateCredits(
     (outputTokens / 1_000_000) * model.outputRateUSD;
 
   return Math.max(1, Math.ceil(rawCost / CREDIT_VALUE));
+}
+
+export function calculateImageCredits(modelId: string): number {
+  const model = modelRates.find((m) => m.modelId === modelId);
+  if (!model) throw new Error(`Unknown modelId: ${modelId}`);
+  if (!model.imageRateUSD) throw new Error(`Model ${modelId} has no image rate configured`);
+
+  return Math.max(1, Math.ceil(model.imageRateUSD / CREDIT_VALUE));
 }
 
 // ─────────────────────────────────────────────────────────────

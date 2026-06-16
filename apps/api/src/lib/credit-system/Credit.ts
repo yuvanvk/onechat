@@ -86,4 +86,12 @@ export class Credit {
       throw error;
     }
   }
+
+  static calculateImageCredits(modelId: string) {
+    const model = Model.getModel(modelId);
+    if (!model.imageRateUSD) {
+      throw new Error(`Model ${modelId} does not have image rate configured`);
+    }
+    return Math.max(1, Math.ceil(model.imageRateUSD / Credit.CREDIT_VALUE));
+  }
 }
