@@ -22,9 +22,6 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
   fetch: async () => {
     const response = await fetch(`http://localhost:8787/api/v1/ai/conversations`);
     const { message, data } = await response.json();
-    if (response.status !== 200) {
-      toast.error(message)
-    }
     set({ conversations: data.conversations ?? [] });
   },
 }));
