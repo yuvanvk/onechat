@@ -1,49 +1,53 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Check, Pencil } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Profile = () => {
-  const [username, setUsername] = useState("yuvan")
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(username)
-
-  const handleEdit = () => {
-    setEditValue(username)
-    setIsEditing(true)
-  }
-
-  const handleSave = () => {
-    setUsername(editValue)
-    setIsEditing(false)
-  }
+  const router = useRouter();
+  const [isEditingUsername, setIsEditingUsername] = useState<boolean>(false);
 
   return (
-    <div className="space-y-4 mt-10">
-      <div className="w-20 h-20 bg-blue-500 border-2 border-blue-400 rounded-full mx-auto" />
-      <div className="text-center space-y-2">
-        {isEditing ? (
-          <div className="flex items-center gap-2 justify-center">
-            <Input
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              className="w-40"
-            />
-            <Button size="icon" onClick={handleSave}>
-              <Check />
+    <div className="max-w-3xl mx-auto w-full py-12 flex flex-col">
+      <div className="flex items-center gap-2">
+        <Button 
+          size={"icon-lg"} 
+          variant={"ghost"}
+          onClick={() => router.back()}
+        >
+          <ArrowLeft />
+        </Button>
+        <h1 className="font-medium text-2xl tracking-tight">Profile</h1>
+      </div>
+
+      <div className="flex flex-col mt-10 gap-8">
+        <div className="space-y-3">
+          <Label className="text-muted-foreground">Username</Label>
+          <div className="flex items-center gap-2">
+            <Input placeholder="Yuvan" disabled={!isEditingUsername} />
+            <Button
+              className="cursor-pointer"
+              onClick={() => setIsEditingUsername(true)}
+            >
+              <Edit />
             </Button>
           </div>
-        ) : (
-          <>
-            <h2 className="text-xl font-semibold">{username}</h2>
-            <Button variant="outline" size="sm" onClick={handleEdit}>
-              <Pencil /> Edit Profile
-            </Button>
-          </>
-        )}
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-muted-foreground">Email</Label>
+          <Input placeholder="yuvan@gmail.com" disabled />
+        </div>
+
+        <div className="flex items-center justify-end gap-2">
+          <Button variant={"destructive"}>Cancel</Button>
+          <Button>Save</Button>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};

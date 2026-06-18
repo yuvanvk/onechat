@@ -10,6 +10,7 @@ import { Topbar } from "@/components/navigation/topbar";
 import { MessageCard } from "@/components/card/message-card";
 import { useConversationStore } from "@/store/useConversation";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
+import { Banner } from "../card/banner";
 
 export const Chat = () => {
   const { id } = useParams();
@@ -31,6 +32,7 @@ export const Chat = () => {
   return (
     <div className="flex flex-col bg-background h-full w-full">
       <Topbar />
+      <Banner bannerText="Credits too low. Please topup credits in order to continue chat." />
       {!id && (
         <div className="flex items-center justify-center h-screen">
           {/* hi */}

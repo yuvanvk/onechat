@@ -74,12 +74,12 @@ export const AppSidebar = () => {
     {
       name: "Profile",
       icon: UserRound,
-      route: "/user-profile",
+      route: "/settings/profile",
     },
     {
       name: "Account Settings",
       icon: Cog,
-      route: "/settings",
+      route: "/settings/billing",
     },
     {
       name: "Pricing",

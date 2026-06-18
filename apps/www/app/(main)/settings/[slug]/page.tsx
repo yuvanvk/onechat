@@ -8,6 +8,8 @@ export default function SettingsPage() {
     switch (slug) {
         case "profile":
             return <Profile />
+        case "billing":
+            return <Billing />
         default:
             return null
     }
