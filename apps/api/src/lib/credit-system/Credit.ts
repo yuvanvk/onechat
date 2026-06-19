@@ -1,4 +1,4 @@
-import { getDB, user } from "@workspace/db";
+import { creditLedger, getDB, user } from "@workspace/db";
 import { Model } from "./Model";
 import { User } from "./User";
 import { and, eq, gte, sql } from "drizzle-orm";
@@ -21,6 +21,8 @@ export class Credit {
   static async reserve(
     userId: string,
     creditsToReserve: number,
+    modelId: string,
+    conversationId: string,
   ): Promise<boolean> {
     const db = Db.get();
     const result = await db
@@ -37,11 +39,31 @@ export class Credit {
       )
       .returning()
 
-    return result.length > 0;
+      if (result.length === 0) return false;
+
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId,
+        conversationId,
+        type: "reserve",
+        amount: -creditsToReserve,
+        modelId,
+        createdAt: new Date(),
+      });
+  
+      return true;
 
   }
 
-  static async settle(userId: string, estimatedCredits: number, actualCredits: number) {
+  static async settle(
+    userId: string,
+    estimatedCredits: number,
+    actualCredits: number,
+    modelId: string,
+    conversationId?: string,
+    inputTokens?: number,
+    outputTokens?: number,
+  ) {
     const db = Db.get();
     const difference = estimatedCredits - actualCredits;
 
@@ -56,10 +78,43 @@ export class Credit {
       )
       .returning()
 
-      return result.length > 0;
+      if (result.length === 0) return false;
+
+      const model = Model.getModel(modelId);
+      const inputRateUsed = model.inputRateUSD;
+      const outputRateUsed = model.outputRateUSD;
+
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId,
+        conversationId,
+        type: "deduct",
+        amount: -actualCredits,
+        modelId,
+        inputTokens,
+        outputTokens,
+        inputRateUsed,
+        outputRateUsed,
+        createdAt: new Date(),
+      });
+  
+      // If estimated > actual, log the refund of the difference
+      if (difference > 0) {
+        await db.insert(creditLedger).values({
+          id: crypto.randomUUID(),
+          userId,
+          conversationId,
+          type: "refund",
+          amount: difference,
+          modelId,
+          createdAt: new Date(),
+        });
+      }
+  
+      return true;
   }
 
-  static async release(userId: string, estimatedCredits: number) {
+  static async release(userId: string, estimatedCredits: number, conversationId: string) {
     const db = Db.get();
     await db
       .update(user)
@@ -68,6 +123,15 @@ export class Credit {
         credit_balance: sql`${user.credit_balance} + ${estimatedCredits}`
       })
       .where(eq(user.id, userId))
+
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId,
+        conversationId,
+        type: "release",
+        amount: estimatedCredits, // positive — credits returned
+        createdAt: new Date(),
+      });
   }
 
   static calculate(

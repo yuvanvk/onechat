@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Webhooks } from "@dodopayments/hono";
 import { Bindings, Variables } from "@/types";
-import { user } from "@workspace/db";
+import { creditLedger, user } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -24,6 +24,14 @@ router.post("/dodo", (c) => {
           updatedAt: new Date(),
         })
         .where(eq(user.id, customerId));
+
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId: customerId,
+        type: "grant",
+        amount: 200_000,
+        createdAt: new Date(),
+      });
     },
     onSubscriptionRenewed: async (event) => {
       const customerId = event.data.customer.customer_id;
@@ -36,6 +44,14 @@ router.post("/dodo", (c) => {
           updatedAt: new Date(),
         })
         .where(eq(user.id, customerId));
+
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId: customerId,
+        type: "grant",
+        amount: 200_000,
+        createdAt: new Date(),
+      });
     },
     onSubscriptionCancellationScheduled: async (event) => {
       const customerId = event.data.customer.customer_id;
@@ -63,7 +79,10 @@ router.post("/dodo", (c) => {
         .where(eq(user.id, customerId));
     },
     onPaymentFailed: async (event) => {
-        console.warn("Payment failed for customer:", event.data.customer?.customer_id);
+      console.warn(
+        "Payment failed for customer:",
+        event.data.customer?.customer_id,
+      );
     },
   })(c);
 });

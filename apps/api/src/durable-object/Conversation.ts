@@ -29,9 +29,16 @@ import { User, Credit, Model, Db } from "@/lib/credit-system";
 import { conversation } from "@workspace/Db";
 import { eq } from "drizzle-orm";
 
+interface StreamResult {
+  fullContent: string;
+  actualInputTokens: number;
+  actualOutputTokens: number;
+}
+
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
-  abortController: AbortController;
+  private userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs"; // TODO: pass from request
+  private abortController = new AbortController();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -41,23 +48,16 @@ export class Conversation extends DurableObject<Env> {
       this.ctx.storage.sql.exec(PDFSchema);
       Db.initDB(this.env.D1_DATABASE);
       Model.warmCache();
-
       this.messages = this.ctx.storage.sql
         .exec(QueryMessages)
         .toArray() as unknown as Message[];
     });
-    this.abortController = new AbortController();
   }
 
   async fetch(request: Request): Promise<Response> {
-    const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
-
+    const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
-    return new Response(null, {
-      status: 101,
-      webSocket: client,
-    });
+    return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
@@ -86,294 +86,128 @@ export class Conversation extends DurableObject<Env> {
     this.abortController = new AbortController();
     const { conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];
-    
-    let estimatedCredits = 0;
-    let isReseverd = false;
-    try {
-      const hasAccess = await User.hasAccess(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-        model,
-      );
-      if (!hasAccess) {
-        this.sendErrorMessage(
-          ws,
-          "Please Upgrade to Pro to access these models",
-          conversationId,
-        );
-        return;
-      }
 
-      const estimatedInputTokens = Model.estimateInputTokens(content);
-      const estimatedOutputTokens = Model.estimateOutputTokens();
-      estimatedCredits = Credit.calculate(
-        model,
-        estimatedInputTokens,
-        estimatedOutputTokens,
-      );
+    const estimatedCredits = Credit.calculate(
+      model,
+      Model.estimateInputTokens(content),
+      Model.estimateOutputTokens(),
+    );
 
-      isReseverd = await Credit.reserve(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    if (
+      !(await this.checkAccessAndReserve(
+        ws,
+        model,
         estimatedCredits,
-      );
-      if (!isReseverd) {
-        this.sendErrorMessage(
-          ws,
-          "Insufficient credits. Either credits too low or you dont have enough credits",
-          conversationId,
-        );
-        return;
-      }
+        conversationId,
+      ))
+    )
+      return;
 
-      const userMessageId = crypto.randomUUID();
-      let currentUserMessage: Message = {
-        id: userMessageId,
-        role,
-        model,
-        content,
-        messageType: "text",
-        pdfs: [],
-        images: [],
-      };
+    const userMessageId = crypto.randomUUID();
+    this.messages.push({
+      id: userMessageId,
+      role,
+      model,
+      content,
+      messageType: "text",
+      pdfs: [],
+      images: [],
+    });
+    this.ctx.storage.sql.exec(
+      InsertIntoMessage,
+      userMessageId,
+      role,
+      content,
+      model,
+      Date.now(),
+    );
 
-      this.messages = [...this.messages, currentUserMessage];
+    // Build content block (text + optional images)
+    const contentBlock = await this.buildContentBlock(
+      content,
+      objects,
+      userMessageId,
+      provider,
+    );
 
-      this.ctx.storage.sql.exec(
-        InsertIntoMessage,
-        userMessageId,
-        role,
-        content,
-        model,
-        Date.now(),
-      );
+    const history = this.messages
+      .slice(0, -1)
+      .map((m) => ({ role: m.role, content: m.content }));
 
-      const contentBlock = [];
-
-      if (objects && objects.length > 0) {
-        for (const obj of objects) {
-          if (!obj.type.startsWith("image/")) continue;
-
-          const object = await this.env.IMAGES_BUCKET.get(obj.name);
-
-          if (!object) {
-            continue;
-          }
-
-          this.ctx.storage.sql.exec(
-            InsertIntoImage,
-            crypto.randomUUID(),
-            obj.name,
-            obj.size,
-            userMessageId,
-            Date.now(),
-          );
-          this.messages = this.messages.map((message) =>
-            message.id === userMessageId
-              ? {
-                  ...message,
-                  images: [
-                    ...(message.images ?? []),
-                    { name: obj.name, size: obj.size, type: obj.type },
-                  ],
-                }
-              : message,
-          );
-
-          const buffer = await object.arrayBuffer();
-          const base64 = toBase64(buffer);
-
-          switch (provider) {
-            case "anthropic":
-              contentBlock.push({
-                type: "image",
-                source: { type: "base64", media_type: obj.type, data: base64 },
-              });
-              break;
-            case "google":
-              contentBlock.push({
-                inlineData: { mimeType: obj.type, data: base64 },
-              });
-              break;
-            default:
-              contentBlock.push({
-                type: "image_url",
-                image_url: { url: `data:${obj.type};base64,${base64}` },
-              });
-              break;
-          }
-        }
-      }
-      contentBlock.push({ type: "text", text: content });
-      let dup = [...this.messages];
-      const history = dup.slice(0, -1).map((message) => ({ role: message.role, content: message.content }))
+    let result: StreamResult | null = null;
+    try {
       const stream = (await this.env.AI.run(
         model,
         {
-          messages: [
-            ...history,
-            {
-              role,
-              content: contentBlock,
-            },
-          ],
+          messages: [...history, { role, content: contentBlock }],
           stream: true,
           metadata: true,
         },
-        {
-          signal: this.abortController.signal,
-          gateway: { id: "onechat" },
-        },
+        { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullContent = "";
-      let isDone = false;
-      let actualInputTokens = 0;
-      let actualOutputTokens = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
-
-        for (const event of events) {
-          if (event.includes("data: [DONE]")) {
-            isDone = true;
-            continue;
-          }
-
-          const dataLine = event
-            .split("\n")
-            .find((l) => l.startsWith("data: "));
-          if (!dataLine) continue;
-
-          const json = JSON.parse(dataLine.slice(6));
-
-          if (json.usage) {
-            actualInputTokens =
-              json.usage.prompt_tokens ??
-              json.usage.input_tokens ??
-              actualInputTokens;
-            actualOutputTokens =
-              json.usage.completion_tokens ??
-              json.usage.output_tokens ??
-              actualOutputTokens;
-          }
-          const token =
-            json.response ?? json.choices?.[0]?.delta?.content ?? "";
-
-          if (token) {
-            fullContent += token;
-            const streamMessage: WebSocketStreamAIResponse = {
-              type: "chat.stream.response",
-              role: "assistant" as Role.Assistant,
-              content: token as string,
-              conversationId,
-            };
-
-            ws.send(JSON.stringify(streamMessage));
-          }
-        }
-      }
-      if (isDone) {
-        const aiMessageId = crypto.randomUUID();
-        const streamDoneMessage: WebSocketStreamAIDone = {
-          type: "chat.stream.done",
-          conversationId,
-          userMessageId,
-          aiMessageId,
-        };
-
-        this.messages = [
-          ...this.messages,
-          {
+      result = await this.readStream(stream, (token) => {
+        ws.send(
+          JSON.stringify({
+            type: "chat.stream.response",
             role: "assistant" as Role.Assistant,
-            content: fullContent,
-            messageType: "text",
-          },
-        ];
-
-        this.ctx.storage.sql.exec(
-          InsertIntoMessage,
-          aiMessageId,
-          Role.Assistant,
-          fullContent,
-          model,
-          Date.now(),
+            content: token,
+            conversationId,
+          } satisfies WebSocketStreamAIResponse),
         );
-        ws.send(JSON.stringify(streamDoneMessage));
-
-        const actualCredits = Credit.calculate(
-          model,
-          actualInputTokens,
-          actualOutputTokens,
-        );
-        await Credit.settle(
-          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-          estimatedCredits,
-          actualCredits,
-        );
-      }
-
-      if (this.messages.length === 2) {
-        const firstUserMessage = this.messages.find(
-          (x) => x.role === Role.User,
-        )?.content;
-        const response = (await this.env.AI.run(
-          "@cf/meta/llama-3.2-3b-instruct",
-          {
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a title generator. You output only 3-5 words. Nothing else. No punctuation. No quotes. No labels.",
-              },
-              {
-                role: "user",
-                content: firstUserMessage,
-              },
-            ],
-          },
-        )) as { response: string };
-        const title = response.response?.trim();
-
-        await Db.get()
-          .update(conversation)
-          .set({ title })
-          .where(eq(conversation.id, conversationId));
-        const titleGeneratedEvent: WebSocketTitleGeneratedMessage = {
-          type: "chat.title.generated",
-          conversationId,
-          title,
-        };
-        ws.send(JSON.stringify(titleGeneratedEvent));
-      }
+      });
     } catch (error) {
-      if (isReseverd) {
-        await Credit.release(
-          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-          estimatedCredits,
-        );
-      }
+      await Credit.release(this.userId, estimatedCredits, conversationId);
       if (error instanceof Error && error.name === "AbortError") {
-        console.log(`Stream aborted for conversation ${conversationId}`);
+        console.log(`Stream aborted: ${conversationId}`);
       } else {
-        console.error(
-          `Error processing stream for conversation ${conversationId}:`,
-          error,
-        );
+        console.error(`Stream error: ${conversationId}`, error);
         this.sendErrorMessage(
           ws,
           "Something went wrong. Please try again later",
           conversationId,
         );
       }
+      return;
     }
+
+    const { fullContent, actualInputTokens, actualOutputTokens } = result;
+    const aiMessageId = crypto.randomUUID();
+
+    this.messages.push({
+      role: "assistant" as Role.Assistant,
+      content: fullContent,
+      messageType: "text",
+    });
+    this.ctx.storage.sql.exec(
+      InsertIntoMessage,
+      aiMessageId,
+      Role.Assistant,
+      fullContent,
+      model,
+      Date.now(),
+    );
+
+    ws.send(
+      JSON.stringify({
+        type: "chat.stream.done",
+        conversationId,
+        userMessageId,
+        aiMessageId,
+      } satisfies WebSocketStreamAIDone),
+    );
+
+    await Credit.settle(
+      this.userId,
+      estimatedCredits,
+      Credit.calculate(model, actualInputTokens, actualOutputTokens),
+      model,
+      conversationId,
+      actualInputTokens,
+      actualOutputTokens,
+    );
+
+    await this.maybeGenerateTitle(ws, conversationId);
   }
 
   async handleStreamRegenerate(
@@ -383,56 +217,35 @@ export class Conversation extends DurableObject<Env> {
     this.abortController = new AbortController();
     const { messageId, model, content, conversationId } = message;
 
-    const messageIndex = this.messages.findIndex((m) => m.id === messageId);
-    const historyUpToMessage = this.messages.slice(0, messageIndex);
+    const estimatedCredits = Credit.calculate(
+      model,
+      Model.estimateInputTokens(content),
+      Model.estimateOutputTokens(),
+    );
 
-    let estimatedCredits = 0;
-    let isReserved = false;
-    try {
-      const hasAccess = await User.hasAccess(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    if (
+      !(await this.checkAccessAndReserve(
+        ws,
         model,
-      );
-      if (!hasAccess) {
-        this.sendErrorMessage(
-          ws,
-          "Please Upgrade to Pro to access these models",
-          conversationId,
-        );
-        return;
-      }
-
-      const estimatedInputTokens = Model.estimateInputTokens(content);
-      const estimatedOutputTokens = Model.estimateOutputTokens();
-      estimatedCredits = Credit.calculate(
-        model,
-        estimatedInputTokens,
-        estimatedOutputTokens,
-      );
-
-      isReserved = await Credit.reserve(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
         estimatedCredits,
-      );
-      if (!isReserved) {
-        this.sendErrorMessage(
-          ws,
-          "Insufficient credits",
-          conversationId,
-        );
-        return;
-      }
+        conversationId,
+      ))
+    )
+      return;
 
+    const messageIndex = this.messages.findIndex((m) => m.id === messageId);
+    const history = this.messages.slice(0, messageIndex);
+
+    let result: StreamResult | null = null;
+    try {
       const stream = (await this.env.AI.run(
         model,
         {
           messages: [
-            ...historyUpToMessage,
+            ...history,
             {
               role: "user",
-              content:
-                content +
-                "<SystemPrompt>Please regenerate an alternative answer for this content, with different wording and more detail.</SystemPrompt>",
+              content: `${content}<SystemPrompt>Please regenerate an alternative answer for this content, with different wording and more detail.</SystemPrompt>`,
             },
           ],
           stream: true,
@@ -440,231 +253,341 @@ export class Conversation extends DurableObject<Env> {
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullContent = "";
-      let isDone = false;
-      let actualInputTokens = 0;
-      let actualOutputTokens = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
-
-        for (const event of events) {
-          if (event.includes("data: [DONE]")) {
-            isDone = true;
-            continue;
-          }
-
-          const dataLine = event
-            .split("\n")
-            .find((l) => l.startsWith("data: "));
-          if (!dataLine) continue;
-
-          const json = JSON.parse(dataLine.slice(6));
-
-          if (json.usage) {
-            actualInputTokens =
-              json.usage.prompt_tokens ??
-              json.usage.input_tokens ??
-              actualInputTokens;
-            actualOutputTokens =
-              json.usage.completion_tokens ??
-              json.usage.output_tokens ??
-              actualOutputTokens;
-          }
-
-          const token =
-            json.response ?? json.choices?.[0]?.delta?.content ?? "";
-
-          if (token) {
-            fullContent += token;
-            const regenerateStreamMessage: WebSocketStreamRegenerteResponse = {
-              type: "chat.regenerate.response",
-              role: "assistant" as Role.Assistant,
-              messageId,
-              content: token as string,
-              conversationId,
-            };
-
-            ws.send(JSON.stringify(regenerateStreamMessage));
-          }
-        }
-      }
-      if (isDone) {
-        const regenerateStreamDoneMessage: WebSocketRegenerateResponseDone = {
-          type: "chat.regenerate.done",
-          messageId,
-          conversationId,
-        };
-
-        this.messages = this.messages.map((message) =>
-          message.role === "assistant" && message.id === messageId
-            ? { ...message, content: fullContent }
-            : message,
+      result = await this.readStream(stream, (token) => {
+        ws.send(
+          JSON.stringify({
+            type: "chat.regenerate.response",
+            role: "assistant" as Role.Assistant,
+            messageId,
+            content: token,
+            conversationId,
+          } satisfies WebSocketStreamRegenerteResponse),
         );
-
-        this.ctx.storage.sql.exec(UpdateMessageContent, fullContent, messageId);
-        ws.send(JSON.stringify(regenerateStreamDoneMessage));
-
-        const actualCredits = Credit.calculate(
-          model,
-          actualInputTokens,
-          actualOutputTokens,
-        );
-        await Credit.settle(
-          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-          estimatedCredits,
-          actualCredits,
-        );
-      }
+      });
     } catch (error) {
-      if (isReserved) {
-        await Credit.release(
-          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-          estimatedCredits,
-        );
-      }
-      console.log(error);
+      await Credit.release(this.userId, estimatedCredits, conversationId);
+      console.error("Regenerate error:", error);
+      return;
     }
+
+    const { fullContent, actualInputTokens, actualOutputTokens } = result;
+
+    this.messages = this.messages.map((m) =>
+      m.role === "assistant" && m.id === messageId
+        ? { ...m, content: fullContent }
+        : m,
+    );
+    this.ctx.storage.sql.exec(UpdateMessageContent, fullContent, messageId);
+
+    ws.send(
+      JSON.stringify({
+        type: "chat.regenerate.done",
+        messageId,
+        conversationId,
+      } satisfies WebSocketRegenerateResponseDone),
+    );
+
+    await Credit.settle(
+      this.userId,
+      estimatedCredits,
+      Credit.calculate(model, actualInputTokens, actualOutputTokens),
+      model,
+      conversationId,
+      actualInputTokens,
+      actualOutputTokens,
+    );
   }
 
   async handleGenerateImage(ws: WebSocket, message: WebSocketGenerateImage) {
     this.abortController = new AbortController();
     const { model, content, conversationId, role } = message;
 
-    let estimatedCredits = 0;
-    let isReserved = false;
-    try {
-      const hasAccess = await User.hasAccess(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    const estimatedCredits = Credit.calculateImageCredits(model);
+
+    if (
+      !(await this.checkAccessAndReserve(
+        ws,
         model,
-      );
-      if (!hasAccess) {
-        this.sendErrorMessage(
-          ws,
-          "Please Upgrade to Pro to access these models",
-          conversationId,
-        );
-        return;
-      }
-
-      estimatedCredits = Credit.calculateImageCredits(model);
-      isReserved = await Credit.reserve(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
         estimatedCredits,
-      );
-      if (!isReserved) {
-        this.sendErrorMessage(
-          ws,
-          "Insufficient credits",
-          conversationId,
-        );
-        return;
-      }
+        conversationId,
+      ))
+    )
+      return;
 
-      const userMessageId: string = crypto.randomUUID();
-      let currentUserMessage: Message = {
-        id: userMessageId,
-        role,
-        messageType: "text",
-        content,
-      };
+    const userMessageId = crypto.randomUUID();
+    this.messages.push({
+      id: userMessageId,
+      role,
+      messageType: "text",
+      content,
+    });
 
-      this.messages = [...this.messages, currentUserMessage];
-
+    try {
       const response = await this.env.AI.run(
         model,
-        {
-          prompt: content,
-        },
-        {
-          signal: this.abortController.signal,
-          gateway: {
-            id: "onechat",
-          },
-        },
+        { prompt: content },
+        { signal: this.abortController.signal, gateway: { id: "onechat" } },
       );
 
-      const base64 = response.image as string;
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
+      const key = await this.saveImageToR2(response.image as string);
+      const aiMessageId = crypto.randomUUID();
 
-      const key = `${crypto.randomUUID()}.jpg`;
-      await this.env.IMAGES_BUCKET.put(key, bytes, {
-        httpMetadata: { contentType: "image/jpeg" },
-      });
-
-      const aiMessageId: string = crypto.randomUUID();
-      const imageGeneratedImage: WebSocketImageGenerated = {
-        type: "chat.generated.image",
+      this.messages.push({
         id: aiMessageId,
         role: Role.Assistant,
-        conversationId,
+        model,
         imageKey: key,
         messageType: "image",
-        userMessageId,
-      };
-      this.messages = [
-        ...this.messages,
-        {
+      });
+
+      await Promise.all([
+        this.ctx.storage.sql.exec(
+          InsertIntoMessage,
+          userMessageId,
+          Role.User,
+          content,
+          model,
+          Date.now(),
+        ),
+        this.ctx.storage.sql.exec(
+          InsertIntoMessageTypeImage,
+          aiMessageId,
+          Role.Assistant,
+          model,
+          "image",
+          key,
+          Date.now(),
+        ),
+        Credit.settle(
+          this.userId,
+          estimatedCredits,
+          estimatedCredits,
+          model,
+          conversationId,
+        ),
+      ]);
+
+      ws.send(
+        JSON.stringify({
+          type: "chat.generated.image",
           id: aiMessageId,
           role: Role.Assistant,
-          model,
+          conversationId,
           imageKey: key,
           messageType: "image",
-        },
-      ];
-
-      // saving user message into storage
-      this.ctx.storage.sql.exec(
-        InsertIntoMessage,
-        userMessageId,
-        Role.User,
-        content,
-        model,
-        Date.now(),
-      );
-
-      // saving ai message into storage
-      this.ctx.storage.sql.exec(
-        InsertIntoMessageTypeImage,
-        aiMessageId,
-        Role.Assistant,
-        model,
-        "image",
-        key,
-        Date.now(),
-      );
-
-      ws.send(JSON.stringify(imageGeneratedImage));
-
-      const actualCredits = Credit.calculateImageCredits(model);
-      await Credit.settle(
-        "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-        estimatedCredits,
-        actualCredits,
+          userMessageId,
+        } satisfies WebSocketImageGenerated),
       );
     } catch (error) {
-      if (isReserved) {
-        await Credit.release(
-          "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
-          estimatedCredits,
-        );
-      }
-      console.error("Error in handleGenerateImage ->", error);
+      await Credit.release(this.userId, estimatedCredits, conversationId);
+      console.error("Image generation error:", error);
       this.sendErrorMessage(ws, "Unable to Generate Image", conversationId);
     }
+  }
+
+  private async checkAccessAndReserve(
+    ws: WebSocket,
+    model: string,
+    estimatedCredits: number,
+    conversationId: string,
+  ): Promise<boolean> {
+    const hasAccess = await User.hasAccess(this.userId, model);
+    if (!hasAccess) {
+      this.sendErrorMessage(
+        ws,
+        "Please upgrade to Pro to access this model",
+        conversationId,
+      );
+      return false;
+    }
+
+    const reserved = await Credit.reserve(
+      this.userId,
+      estimatedCredits,
+      model,
+      conversationId,
+    );
+    if (!reserved) {
+      this.sendErrorMessage(ws, "Insufficient credits", conversationId);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Reads an SSE stream, calls onToken for each token, and returns
+   * the full content and actual token counts when done.
+   */
+  private async readStream(
+    stream: ReadableStream,
+    onToken: (token: string) => void,
+  ): Promise<StreamResult> {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let sseBuffer = "";
+    let fullContent = "";
+    let actualInputTokens = 0;
+    let actualOutputTokens = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      sseBuffer += decoder.decode(value, { stream: true });
+      const events = sseBuffer.split("\n\n");
+      sseBuffer = events.pop() ?? "";
+
+      for (const event of events) {
+        if (event.includes("data: [DONE]")) continue;
+
+        const dataLine = event.split("\n").find((l) => l.startsWith("data: "));
+        if (!dataLine) continue;
+
+        const json = JSON.parse(dataLine.slice(6));
+
+        if (json.usage) {
+          actualInputTokens =
+            json.usage.prompt_tokens ??
+            json.usage.input_tokens ??
+            actualInputTokens;
+          actualOutputTokens =
+            json.usage.completion_tokens ??
+            json.usage.output_tokens ??
+            actualOutputTokens;
+        }
+
+        const token = json.response ?? json.choices?.[0]?.delta?.content ?? "";
+        if (token) {
+          fullContent += token;
+          onToken(token);
+        }
+      }
+    }
+
+    return { fullContent, actualInputTokens, actualOutputTokens };
+  }
+
+  /**
+   * Builds the content block for a message, including any uploaded images.
+   */
+  private async buildContentBlock(
+    content: string,
+    objects: WebSocketCreateStreamMessage["objects"],
+    userMessageId: string,
+    provider: string,
+  ) {
+    const contentBlock: unknown[] = [];
+
+    if (objects && objects.length > 0) {
+      for (const obj of objects) {
+        if (!obj.type.startsWith("image/")) continue;
+
+        const object = await this.env.IMAGES_BUCKET.get(obj.name);
+        if (!object) continue;
+
+        this.ctx.storage.sql.exec(
+          InsertIntoImage,
+          crypto.randomUUID(),
+          obj.name,
+          obj.size,
+          userMessageId,
+          Date.now(),
+        );
+        this.messages = this.messages.map((m) =>
+          m.id === userMessageId
+            ? {
+                ...m,
+                images: [
+                  ...(m.images ?? []),
+                  { name: obj.name, size: obj.size, type: obj.type },
+                ],
+              }
+            : m,
+        );
+
+        const base64 = toBase64(await object.arrayBuffer());
+
+        switch (provider) {
+          case "anthropic":
+            contentBlock.push({
+              type: "image",
+              source: { type: "base64", media_type: obj.type, data: base64 },
+            });
+            break;
+          case "google":
+            contentBlock.push({
+              inlineData: { mimeType: obj.type, data: base64 },
+            });
+            break;
+          default:
+            contentBlock.push({
+              type: "image_url",
+              image_url: { url: `data:${obj.type};base64,${base64}` },
+            });
+        }
+      }
+    }
+
+    contentBlock.push({ type: "text", text: content });
+    return contentBlock;
+  }
+
+  /** Decodes a base64 image string and saves it to R2, returning the key. */
+  private async saveImageToR2(base64: string): Promise<string> {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const key = `${crypto.randomUUID()}.jpg`;
+    await this.env.IMAGES_BUCKET.put(key, bytes, {
+      httpMetadata: { contentType: "image/jpeg" },
+    });
+    return key;
+  }
+
+  /** Generates a conversation title after the first exchange. */
+  private async maybeGenerateTitle(ws: WebSocket, conversationId: string) {
+    if (this.messages.length !== 2) return;
+
+    const firstUserMessage = this.messages.find(
+      (m) => m.role === Role.User,
+    )?.content;
+    const response = (await this.env.AI.run("@cf/meta/llama-3.2-3b-instruct", {
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a title generator. You output only 3-5 words. Nothing else. No punctuation. No quotes. No labels.",
+        },
+        { role: "user", content: firstUserMessage },
+      ],
+    })) as unknown as { response: string };
+
+    const title = response.response?.trim();
+    await Db.get()
+      .update(conversation)
+      .set({ title })
+      .where(eq(conversation.id, conversationId));
+
+    ws.send(
+      JSON.stringify({
+        type: "chat.title.generated",
+        conversationId,
+        title,
+      } satisfies WebSocketTitleGeneratedMessage),
+    );
+  }
+
+  sendErrorMessage(ws: WebSocket, message: string, conversationId: string) {
+    ws.send(
+      JSON.stringify({
+        type: "chat.stream.error",
+        conversationId,
+        message,
+      } satisfies WebSocketErrorMessage),
+    );
   }
 
   async getMessages() {
@@ -673,18 +596,5 @@ export class Conversation extends DurableObject<Env> {
 
   async destroy() {
     await this.ctx.storage.deleteAll();
-  }
-
-  async sendErrorMessage(
-    ws: WebSocket,
-    message: string,
-    conversationId: string,
-  ) {
-    const errorMessage: WebSocketErrorMessage = {
-      type: "chat.stream.error",
-      conversationId,
-      message,
-    };
-    ws.send(JSON.stringify(errorMessage));
   }
 }
