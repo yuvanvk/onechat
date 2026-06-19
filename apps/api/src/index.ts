@@ -4,6 +4,8 @@ import auth from "@/routes/auth";
 import share from "@/routes/share";
 import checkout from "@/routes/checkout";
 import webhook from "@/routes/webhook";
+import settings from "@/routes/settings";
+
 
 import r2 from "@/routes/r2";
 
@@ -17,7 +19,7 @@ const app = new Hono<{ Bindings: Bindings, Variables: Variables }>({
 
 app.use("*", cors({
   origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
@@ -30,7 +32,8 @@ const routes = [
   { path: "/share", router: share },
   { path: "/r2", router: r2 },
   { path: "/checkout", router: checkout },
-  { path: "/webhook", router: webhook }
+  { path: "/webhook", router: webhook },
+  { path: "/settings", router: settings }
 ];
 
 const api = app.basePath("/api/v1");

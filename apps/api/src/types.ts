@@ -16,6 +16,9 @@ export type Bindings = {
     GOOGLE_CLIENT_ID: string,
     GOOGLE_CLIENT_SECRET: string,
     RESEND_API_KEY: string,
+    DODO_PAYMENTS_API_KEY: string,
+    DODO_PAYMENTS_RETURN_URL: string,
+    DODO_PAYMENTS_WEBHOOK_KEY: string
 }
 
 type AuthInstance = ReturnType<typeof auth>;
