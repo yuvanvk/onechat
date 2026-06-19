@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useModel } from "@/store/useModel";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
@@ -26,6 +26,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { ModelCapability } from "@/lib/supported-models/models";
+
+const CAPABILITY_FILTERS: { key: ModelCapability; icon: any; label: string }[] = [
+  { key: "text", icon: IoChatbubbleOutline, label: "Text" },
+  { key: "vision", icon: Eye, label: "Vision" },
+  { key: "reasoning", icon: Brain, label: "Reasoning" },
+  { key: "coding", icon: Code2, label: "Coding" },
+  { key: "image-gen", icon: Image, label: "Image Gen" },
+  { key: "multilingual", icon: Globe, label: "Multilingual" },
+  { key: "multi-agent", icon: Bot, label: "Multi-Agent" },
+];
 
 export const SelectModelPopover = () => {
   const {
@@ -40,11 +51,11 @@ export const SelectModelPopover = () => {
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
   const [provider, setProvider] = useState("favourites");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ModelCapability[]>([]);
 
   const { data } = authClient.useSession();
-  const userPlan = data?.user.plan ?? "free";
-  console.log(userPlan);
-  
+  const userPlan = data?.user.plan ?? "free";  
   
   const hasSearch = search.length > 0;
 
@@ -61,9 +72,36 @@ export const SelectModelPopover = () => {
     ),
   );
 
-  const displayModels = hasSearch
+  let displayModels = hasSearch
     ? modelsBasedOnSearch
     : modelsToDisplayBasedOnProvider;
+
+  if (activeFilters.length > 0) {
+    displayModels = displayModels.filter((m) =>
+      activeFilters.some((f) => m?.capabilities.includes(f)),
+    );
+  }
+
+  const toggleFilter = (cap: ModelCapability) => {
+    setActiveFilters((prev) =>
+      prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap],
+    );
+  };
+
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+      setFilterOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (filterOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [filterOpen, handleClickOutside]);
 
   useEffect(() => {
     fetchFavourites();
@@ -74,18 +112,18 @@ export const SelectModelPopover = () => {
       <div
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1 w-28",
+          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1 max-w-48",
           "cursor-pointer transition-all duration-150 select-none",
           open && "bg-accent",
         )}
       >
         <div
           className={cn(
-            "text-[13px] text-muted-foreground",
+            "text-[13px] text-muted-foreground truncate",
             open && "text-foreground",
           )}
         >
-          {modelName.slice(0, 10)}...
+          {modelName}
         </div>
         <motion.svg
           animate={{ rotate: open ? "180deg" : "0deg" }}
@@ -135,9 +173,47 @@ export const SelectModelPopover = () => {
                 />
               </div>
 
-              <Button variant={"ghost"} size={"icon-xs"}>
-                <Filter />
-              </Button>
+              <div className="relative" ref={filterRef}>
+                <Button
+                  variant={"ghost"}
+                  size={"icon-xs"}
+                  onClick={() => setFilterOpen(!filterOpen)}
+                >
+                  <Filter
+                    className={cn(activeFilters.length > 0 && "text-blue-500")}
+                  />
+                </Button>
+                {filterOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg p-1.5 z-50">
+                    {CAPABILITY_FILTERS.map(({ key, icon: Icon, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleFilter(key)}
+                        className={cn(
+                          "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded-md transition-colors",
+                          activeFilters.includes(key)
+                            ? "bg-blue-500/10 text-blue-500"
+                            : "hover:bg-accent text-muted-foreground",
+                        )}
+                      >
+                        <Icon size={14} />
+                        {label}
+                      </button>
+                    ))}
+                    {activeFilters.length > 0 && (
+                      <>
+                        <div className="h-px bg-border my-1 mx-2" />
+                        <button
+                          onClick={() => setActiveFilters([])}
+                          className="text-xs text-muted-foreground hover:text-foreground w-full text-left px-2 py-1 hover:bg-accent rounded-md"
+                        >
+                          Clear filters
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={cn("flex-1 relative")}>
