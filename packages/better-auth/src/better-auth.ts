@@ -59,7 +59,14 @@ const getOptions = (env: Bindings) => {
           type: "string",
           defaultValue: "free",
           input: false,
+          fieldName: "plan"
         },
+        creditBalance: {
+          type: "number",
+          defaultValue: 0,
+          input: false,
+          fieldName: "credit_balance"
+        }
       },
     },
   } satisfies BetterAuthOptions;
@@ -76,6 +83,7 @@ export const auth = (env: Bindings) => {
           user: {
             ...user,
             plan: user.plan ?? "free",
+            creditBalance: user.creditBalance ?? 0
           },
           session,
         }),

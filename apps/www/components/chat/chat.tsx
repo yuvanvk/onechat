@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { ChatInput } from "./chat-input";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useChatStore } from "@/store/useChat";
 import { useMessage } from "@/hooks/useMessges";
 import { Topbar } from "@/components/navigation/topbar";
@@ -11,12 +11,16 @@ import { MessageCard } from "@/components/card/message-card";
 import { useConversationStore } from "@/store/useConversation";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
 import { Banner } from "../card/banner";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 export const Chat = () => {
   const { id } = useParams();
   const { messages, setConversationId } = useChatStore();
   const { fetch } = useConversationStore();
+  const router = useRouter();
   const { isLoading, error } = useMessage(id as string);
+
+  const { data } = authClient.useSession();
 
   useEffect(() => {
     if (id) {
@@ -25,9 +29,16 @@ export const Chat = () => {
     fetch();
   }, [id, setConversationId, fetch]);
 
+  useEffect(() => {
+    if (data?.session) {
+      router.push("/")
+    }
+  }, [data?.session])
+
   if (error) {
     toast.error(error);
   }
+
 
   return (
     <div className="flex flex-col bg-background h-full w-full">

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
 import dynamic from "next/dynamic";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
@@ -13,8 +13,8 @@ import { authClient } from "@/lib/better-auth/auth-client";
 import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
 
 const FaultyTerminal = dynamic(() => import("@/components/ui/FaultyTerminal"), {
-  ssr: false
-})
+  ssr: false,
+});
 
 const TERMINAL_PROPS = {
   scale: 1.5,
@@ -44,6 +44,14 @@ export const SignUp = () => {
   const [username, setUsername] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const { data } = authClient.useSession();
+
+  useEffect(() => {
+    if (data?.session) {
+      router.push("/");
+    }
+  }, [data?.session]);
   
   async function handleLogin() {
     if (!email || !password || !username) {
@@ -66,14 +74,11 @@ export const SignUp = () => {
         "p-3 md:p-0 relative",
       )}
     >
-      <div 
+      <div
         onClick={() => router.push("/login")}
         className="absolute top-5 right-5"
       >
-        <Button 
-          size={"sm"} 
-          variant={"secondary"}
-        >
+        <Button size={"sm"} variant={"secondary"}>
           Login
           <ArrowRight />
         </Button>
@@ -102,9 +107,7 @@ export const SignUp = () => {
               type="email"
               placeholder="Enter your email address"
               onChange={(e) => setEmail(e.target.value)}
-              className={cn(
-                "bg-input border-border transition-all",
-              )}
+              className={cn("bg-input border-border transition-all")}
             />
             <span className="text-[13px] text-muted-foreground pl-2">
               We'll never share your email within anyone else.
@@ -119,9 +122,7 @@ export const SignUp = () => {
               type="text"
               placeholder="Enter your username"
               onChange={(e) => setUsername(e.target.value)}
-              className={cn(
-                "bg-input border-border transition-all",
-              )}
+              className={cn("bg-input border-border transition-all")}
             />
           </div>
 
@@ -134,9 +135,7 @@ export const SignUp = () => {
                 placeholder="Enter your Password"
                 type={showPassword ? "text" : "password"}
                 onChange={(e) => setPassword(e.target.value)}
-                className={cn(
-                  "bg-input border-border transition-all",
-                )}
+                className={cn("bg-input border-border transition-all")}
               />
               <Button
                 size={"icon"}
@@ -160,12 +159,16 @@ export const SignUp = () => {
 
           <div className="flex items-center gap-2 w-full">
             <hr className="grow border-t border-border" />
-            <span className="text-muted-foreground text-xs font-medium">or</span>
+            <span className="text-muted-foreground text-xs font-medium">
+              or
+            </span>
             <hr className="grow border-t border-border" />
           </div>
 
           <Button
-            className={cn("bg-secondary text-secondary-foreground border-border")}
+            className={cn(
+              "bg-secondary text-secondary-foreground border-border",
+            )}
           >
             <FcGoogle />
             Google

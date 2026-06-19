@@ -43,6 +43,13 @@
       "when": 1781857610794,
       "tag": "0005_great_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1781864145113,
+      "tag": "0006_high_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

@@ -75,7 +75,7 @@ export const favourite = sqliteTable("favourite", {
 export const creditLedger = sqliteTable("credit_ledger", {
   id: t.text("id").primaryKey(),
   userId: t.text("user_id").notNull().references(() => user.id),
-  conversationId: t.text("conversation_id").references(() => conversation.id),
+  conversationId: t.text("conversation_id").references(() => conversation.id, { onDelete: "set null"}),
   type: t.text("type", {
     enum: ["grant", "deduct", "topup", "refund", "reserve", "release"],
   }).notNull(),

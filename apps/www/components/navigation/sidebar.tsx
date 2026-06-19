@@ -22,6 +22,7 @@ import {
   CircleDashed,
   CircleDollarSign,
   Cog,
+  LogIn,
   LogOut,
   MoonStar,
   Palette,
@@ -44,6 +45,7 @@ import {
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { System } from "@/components/icons";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 export const AppSidebar = () => {
   const router = useRouter();
@@ -52,6 +54,8 @@ export const AppSidebar = () => {
   const { setOpen } = useCommandStore();
   const { theme, setTheme } = useTheme();
   const pathName = usePathname();
+
+  const { data } = authClient.useSession();
 
   const { id } = useParams();
 
@@ -119,7 +123,7 @@ export const AppSidebar = () => {
       </SidebarHeader>
       <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarMenu>
+          <SidebarMenu className="space-y-1">
             {SIDEBAR_SHORTCUTS.map((s) => {
               const Icon = s.icon;
               return (
@@ -168,16 +172,16 @@ export const AppSidebar = () => {
           <SidebarMenuItem className="flex items-center justify-between gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
+                <SidebarMenuButton className="outline-none! focus:ring-0! ">
                   <div className="w-5 h-5 bg-blue-500 border border-blue-400 rounded-full" />
-                  yuvan
+                  {data?.user.name}
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="min-w-63">
                 <DropdownMenuGroup>
                   <DropdownMenuItem className="flex flex-col items-start gap-0 font-semibold pointer-events-none text-sm hover:bg-transparent!">
-                    <div>yuvan</div>
-                    <div className="text-neutral-500!">yuvan@gmail.com</div>
+                    <div>{data?.user.name}</div>
+                    <div className="text-neutral-500!">{data?.user.email}</div>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
@@ -196,9 +200,14 @@ export const AppSidebar = () => {
                       </DropdownMenuItem>
                     );
                   })}
-                  <DropdownMenuItem>
-                    <Wallet className="text-neutral-400" />
-                    Credits
+                  <DropdownMenuItem className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="text-neutral-400" />
+                      Credits
+                    </div>
+                    <div className="text-muted-foreground">
+                      {data?.user.creditBalance }
+                    </div>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
@@ -267,20 +276,30 @@ export const AppSidebar = () => {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-sm">
-                    <LogOut className="text-neutral-400" />
-                    Sign Out
+                    {data?.session ? (
+                      <>
+                        <LogOut className="text-neutral-400" />
+                        Sign Out
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="text-neutral-400" />
+                        Log In
+                      </>
+                    )}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
+                <Button
                   variant={"outline"}
-                  className="w-fit px-4 items-center"
+                  className="w-fit font-medium"
                 >
-                  $5
-                </SidebarMenuButton>
+                  {data?.user.creditBalance && data.user.creditBalance * 0.0001}
+                  $
+                </Button>
               </DropdownMenuTrigger>
             </DropdownMenu>
           </SidebarMenuItem>

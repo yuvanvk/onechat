@@ -14,6 +14,14 @@ export const VerifyEmail = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState(false);
 
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    if (session?.session) {
+      router.push("/")
+    }
+  }, [session?.session])
+
   useEffect(() => {
     const verify = async () => {
       if (token) {

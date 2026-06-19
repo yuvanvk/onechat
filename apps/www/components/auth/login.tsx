@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
@@ -42,6 +42,14 @@ export const Login = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const { data } = authClient.useSession();
+
+  useEffect(() => {
+    if (data?.session) {
+      router.push("/")
+    }
+  }, [data?.session])
 
   async function handleLogin() {
     if (!email || !password) {

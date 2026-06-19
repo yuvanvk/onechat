@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 interface BannerProps {
   bannerText: string;
@@ -13,10 +14,16 @@ interface BannerProps {
 
 export const Banner = ({ bannerText, className }: BannerProps) => {
   const [show, setShow] = useState(true);
+  const { data } = authClient.useSession();
+  console.log(data?.user.creditBalance);
+  
+
+  const lowCredits = data?.user.creditBalance! < (data?.user.plan === "free" ? 20_000 : 200_000) * 0.20;
+
 
   return (
     <AnimatePresence>
-      {show && (
+      {show && lowCredits && (
         <motion.div
           initial={{ y: -40, filter: "blur(10px)" }}
           animate={{ y: 0, filter: "blur(0px)" }}

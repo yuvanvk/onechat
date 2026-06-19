@@ -119,6 +119,8 @@ router.delete("/chat/delete/:conversationId", async (c) => {
 
     return c.json({ message: "Conversation deleted successfully" });
   } catch (error) {
+    console.log(error);
+    
     return c.json({ message: "Interal Server Error" }, 500);
   }
 });

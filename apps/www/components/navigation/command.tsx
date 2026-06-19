@@ -89,7 +89,7 @@ export const CommandBox = () => {
   };
 
   const handleBuyCredits = () => {
-    router.push("/settings");
+    router.push("/pricing");
     setOpen(false);
   };
 
@@ -99,7 +99,7 @@ export const CommandBox = () => {
   };
 
   const handleSettings = () => {
-    router.push("/settings");
+    router.push("/settings/profile");
     setOpen(false);
   };
 

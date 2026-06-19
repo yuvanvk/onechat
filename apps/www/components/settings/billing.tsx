@@ -8,25 +8,22 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { useEffect } from "react";
 
-// --- Mock data shape — swap with real data from your billing API ---
-const creditBalance = {
-  renewsInDays: 20,
-  card: {
-    label: "yuvan",
-    amount: 4.99,
-  },
-  gifted: { used: 0, total: 0 },
-  monthly: { used: 2.00, total: 2.00 },
-  purchased: { used: 0, total: 20.00 },
-};
 
-// Total available = sum of used amounts across all credit types
-// (matches the screenshot, where "used" doubles as "available" while credits are unexpired)
-const totalAvailableCredits =
-  creditBalance.gifted.used +
-  creditBalance.monthly.used +
-  creditBalance.purchased.used;
+
+const CREDIT_VALUE = 0.0001;
+
+const PLAN_CREDITS = {
+  free: 20_000, // $2/mo
+  pro: 200_000, // $20/mo
+} as const;
+
+const toDollars = (credits: number) => credits * CREDIT_VALUE;
+const formatCurrency = (value: number) => `$${value.toFixed(4)}`;
+const formatCurrencyShort = (value: number) => `$${value.toFixed(2)}`;
+
+// ─── Mock data (swap expiration schedule with real API data later) ────────────
 
 const expirationSchedule = [
   { type: "Monthly", used: 4.99, total: 5.0, expiration: "Aug 11, 2026" },
@@ -37,21 +34,34 @@ const usedAndExpired = [
   { type: "Monthly", used: 4.91, total: 5.0, expiration: "May 12, 2026" },
 ];
 
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
-
 export const Billing = () => {
   const router = useRouter();
   const { data } = authClient.useSession();
 
-  console.log(data?.user);
+  const plan: "free" | "pro" = data?.user.plan === "pro" ? "pro" : "free";
+  const creditBalance = data?.user.creditBalance ?? 0;
+
+  const totalPlanCredits = PLAN_CREDITS[plan];
+  const usedCredits = totalPlanCredits - creditBalance;
+
+  const creditBalanceUSD = toDollars(creditBalance);
+  const totalPlanUSD = toDollars(totalPlanCredits);
+  const usedUSD = toDollars(usedCredits);
+
+  const renewsInDays = 20; // TODO: calculate from subscription renewal date
+
+  useEffect(() => {
+    if (!data?.session) {
+      router.push("/signup");
+    }
+  }, [data?.session]);
 
   async function handleCheckout() {
     const response = await fetch(
       "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customer_id=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
     );
     const json = await response.json();
-    const redirectUrl = json.checkout_url;
-    redirect(redirectUrl);
+    redirect(json.checkout_url);
   }
 
   return (
@@ -67,6 +77,7 @@ export const Billing = () => {
         <h1 className="font-medium text-2xl tracking-tight">Billing</h1>
       </div>
 
+      {/* ── Current Plan ── */}
       <div className="w-full flex flex-col gap-5 mt-10">
         <h2 className="text-muted-foreground font-medium pl-1">Current Plan</h2>
 
@@ -74,14 +85,14 @@ export const Billing = () => {
           <div className="flex flex-col gap-1">
             <div>
               <span className="font-medium">
-                {data?.user.plan === "free" ? "Free Plan" : "Pro Plan"}
+                {plan === "free" ? "Free Plan" : "Pro Plan"}
               </span>
               <span className="text-muted-foreground ml-2">
-                {data?.user.plan === "free" ? "$0/mo" : "$20/mo"}
+                {plan === "free" ? "$0/mo" : "$20/mo"}
               </span>
             </div>
             <span className="text-muted-foreground">
-              Includes $2 credits every month.
+              Includes {plan === "free" ? "$2" : "$20"} credits every month.
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -94,19 +105,18 @@ export const Billing = () => {
               <SquareArrowOutUpRight />
             </Button>
             <Button
-              onClick={async () => {
-                if (data?.user.plan === "free") {
-                  await handleCheckout();
-                }
-              }}
               size={"sm"}
+              onClick={async () => {
+                if (plan === "free") await handleCheckout();
+              }}
             >
-              {data?.user.plan === "free" ? "Upgrade" : "Cancel Plan"}
+              {plan === "free" ? "Upgrade" : "Cancel Plan"}
             </Button>
           </div>
         </div>
       </div>
 
+      {/* ── Credit Balance ── */}
       <div className="w-full flex flex-col gap-5 mt-10">
         <div className="w-full border border-accent dark:bg-[#121212] rounded-lg overflow-hidden">
           <div className="flex items-center justify-between p-3">
@@ -115,7 +125,7 @@ export const Billing = () => {
               <span className="text-muted-foreground">
                 Your monthly credits renew in{" "}
                 <span className="text-foreground font-medium">
-                  {creditBalance.renewsInDays} days
+                  {renewsInDays} days
                 </span>
                 . Unused monthly credits do not roll over.
               </span>
@@ -124,12 +134,10 @@ export const Billing = () => {
               size={"sm"}
               variant={"outline"}
               onClick={async () => {
-                if (data?.user.plan === "free") {
-                  await handleCheckout();
-                }
+                if (plan === "free") await handleCheckout();
               }}
             >
-              {data?.user.plan === "free" ? "Upgrade" : "Cancel Plan"}
+              {plan === "free" ? "Upgrade" : "Cancel Plan"}
             </Button>
           </div>
 
@@ -147,22 +155,22 @@ export const Billing = () => {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-2xl font-semibold tracking-tight">
-                  {formatCurrency(creditBalance.card.amount)}
+                  {formatCurrency(creditBalanceUSD)}
                 </span>
                 <span className="text-foreground">
-                  {creditBalance.card.label}
+                  {data?.user.name ?? "—"}
                 </span>
               </div>
             </motion.div>
 
             {/* Breakdown rows */}
-            <div className="flex-1 flex flex-col rounded-md overflow-hidden ">
+            <div className="flex-1 flex flex-col rounded-md overflow-hidden">
               <div className="flex items-center justify-between px-2 py-2.5">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                   Gifted Credits
                   <Info className="size-3.5" />
                 </span>
-                <span>{formatCurrency(creditBalance.gifted.used)}</span>
+                <span>{formatCurrencyShort(0)}</span>
               </div>
 
               <div className="flex items-center justify-between px-2 py-2.5 bg-neutral-200/50 dark:bg-black rounded-lg">
@@ -171,8 +179,8 @@ export const Billing = () => {
                   <Info className="size-3.5" />
                 </span>
                 <span>
-                  {formatCurrency(creditBalance.monthly.used)} /{" "}
-                  {formatCurrency(creditBalance.monthly.total)}
+                  {formatCurrencyShort(usedUSD)} /{" "}
+                  {formatCurrencyShort(totalPlanUSD)}
                 </span>
               </div>
 
@@ -181,19 +189,21 @@ export const Billing = () => {
                   Purchased Credits
                   <Info className="size-3.5" />
                 </span>
-                <span>{formatCurrency(creditBalance.purchased.used)}</span>
+                <span>{plan === "free" ? "$0" : "$20.00"}</span>
               </div>
 
               <div className="flex items-center justify-between px-2 py-2.5 bg-neutral-200/50 dark:bg-black font-medium rounded-lg">
                 <span>Total Available Credits</span>
-                <span>{formatCurrency(totalAvailableCredits)}</span>
+                <span>{formatCurrency(creditBalanceUSD)}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* ── Expiration Schedule ── */}
       <div className="w-full flex flex-col gap-5 mt-10">
-        <div className="w-full border border-accent  dark:bg-[#121212] rounded-lg overflow-hidden">
+        <div className="w-full border border-accent dark:bg-[#121212] rounded-lg overflow-hidden">
           <div className="p-3">
             <span className="font-medium">Credit Expiration Schedule</span>
           </div>
