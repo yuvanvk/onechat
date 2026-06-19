@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import ai from "@/routes/ai";
 import auth from "@/routes/auth";
 import share from "@/routes/share";
+import checkout from "@/routes/checkout";
+import webhook from "@/routes/webhook";
+
 import r2 from "@/routes/r2";
 
 import { cors } from "hono/cors";
@@ -25,7 +28,9 @@ const routes = [
   { path: "/auth", router: auth },
   { path: "/ai", router: ai },
   { path: "/share", router: share },
-  { path: "/r2", router: r2 }
+  { path: "/r2", router: r2 },
+  { path: "/checkout", router: checkout },
+  { path: "/webhook", router: webhook }
 ];
 
 const api = app.basePath("/api/v1");

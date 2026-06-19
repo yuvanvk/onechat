@@ -24,11 +24,11 @@ export class User {
 
   static async hasAccess(userId: string, modelId: string): Promise<boolean> {
     const user = await User.getUser(userId);
-    const model = await Model.getModel(modelId);
+    const model = Model.getModel(modelId);
 
-    if (model.minTier === "free") {
+    if (model.tier === "free") {
       return true;
     }
-    return model.minTier === "pro" && user?.tier === "pro";
+    return model.tier === "pro" && user?.plan === "pro";
   }
 }

@@ -1,4 +1,4 @@
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 // --- Mock data shape — swap with real data from your billing API ---
 const creditBalance = {
@@ -16,8 +17,8 @@ const creditBalance = {
     amount: 4.99,
   },
   gifted: { used: 0, total: 0 },
-  monthly: { used: 4.99, total: 5.0 },
-  purchased: { used: 0, total: 0 },
+  monthly: { used: 2.00, total: 2.00 },
+  purchased: { used: 0, total: 20.00 },
 };
 
 // Total available = sum of used amounts across all credit types
@@ -40,6 +41,18 @@ const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
 export const Billing = () => {
   const router = useRouter();
+  const { data } = authClient.useSession();
+
+  console.log(data?.user);
+
+  async function handleCheckout() {
+    const response = await fetch(
+      "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customer_id=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    );
+    const json = await response.json();
+    const redirectUrl = json.checkout_url;
+    redirect(redirectUrl);
+  }
 
   return (
     <div className="max-w-3xl mx-auto w-full py-12 flex flex-col tracking-tight text-sm">
@@ -60,11 +73,15 @@ export const Billing = () => {
         <div className="w-full border border-accent dark:bg-[#121212] rounded-lg flex items-center justify-between p-3">
           <div className="flex flex-col gap-1">
             <div>
-              <span className="font-medium">Free Plan</span>
-              <span className="text-muted-foreground ml-2">$0/mo</span>
+              <span className="font-medium">
+                {data?.user.plan === "free" ? "Free Plan" : "Pro Plan"}
+              </span>
+              <span className="text-muted-foreground ml-2">
+                {data?.user.plan === "free" ? "$0/mo" : "$20/mo"}
+              </span>
             </div>
             <span className="text-muted-foreground">
-              Includes $5 credits every month.
+              Includes $2 credits every month.
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -76,7 +93,16 @@ export const Billing = () => {
               View Plans
               <SquareArrowOutUpRight />
             </Button>
-            <Button size={"sm"}>Upgrade</Button>
+            <Button
+              onClick={async () => {
+                if (data?.user.plan === "free") {
+                  await handleCheckout();
+                }
+              }}
+              size={"sm"}
+            >
+              {data?.user.plan === "free" ? "Upgrade" : "Cancel Plan"}
+            </Button>
           </div>
         </div>
       </div>
@@ -94,8 +120,16 @@ export const Billing = () => {
                 . Unused monthly credits do not roll over.
               </span>
             </div>
-            <Button size={"sm"} variant={"outline"}>
-              Upgrade
+            <Button
+              size={"sm"}
+              variant={"outline"}
+              onClick={async () => {
+                if (data?.user.plan === "free") {
+                  await handleCheckout();
+                }
+              }}
+            >
+              {data?.user.plan === "free" ? "Upgrade" : "Cancel Plan"}
             </Button>
           </div>
 

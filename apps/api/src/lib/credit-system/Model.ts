@@ -7,7 +7,7 @@ type _Model = {
   inputRateUSD: number;
   outputRateUSD: number;
   imageRateUSD: number | null;
-  minTier: "free" | "pro";
+  tier: "free" | "pro";
   usecase: "text" | "image";
   isActive: boolean;
 };
@@ -19,7 +19,7 @@ export class Model {
 
   static async warmCache() {
     const db = Db.get();
-    const modelsInDb = await db.query.modelRate.findMany({ 
+    const modelsInDb = await db.query.model.findMany({ 
       columns: {
         id: true,
         modelId: true,
@@ -28,7 +28,7 @@ export class Model {
         inputRateUSD: true,
         outputRateUSD: true,
         isActive: true,
-        minTier: true,
+        tier: true,
         usecase: true,
       }
     })

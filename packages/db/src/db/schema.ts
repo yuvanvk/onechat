@@ -6,9 +6,11 @@ export const user = sqliteTable("user", {
   name: t.text("name").notNull(),
   email: t.text("email").notNull().unique(),
   emailVerified: t.integer("email_verified").notNull(),
-  tier: t.text("tier", { enum: ["free", "pro"] }).notNull().default("free"),
+  plan: t.text("plan", { enum: ["free", "pro"] }).notNull().default("free"),
   credit_balance: t.integer("credit_balance").notNull().default(0),
   reserved_credits: t.integer("reserved_credits").notNull().default(0),
+  subscriptionId: t.text("subscription_id").unique(),
+  cancelAtNextBillingDate: t.integer("cancel_at_next_billing_date", { mode: "boolean" }).default(false),
   image: t.text("image"),
   createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),
@@ -90,19 +92,23 @@ export const creditLedger = sqliteTable("credit_ledger", {
   t.index("ledger_conversation_idx").on(table.conversationId),
 ]);
 
-export const modelRate = sqliteTable("model_rate", {
+
+export const model = sqliteTable("model", {
   id: t.text("id").primaryKey(),
   modelId: t.text("model_id").notNull().unique(),
   provider: t.text("provider").notNull(),
+  displayName: t.text("display_name").notNull(),
+  description: t.text("description").notNull(),
+  tier: t.text("tier", { enum: ["free", "pro"]}).notNull().default("free"),
+  usecase: t.text("usecase", { enum: ["text", "image"]}).notNull().default("text"),
+  isActive: t.integer("is_active", { mode: "boolean" }).notNull().default(true),
+  capabilities: t.text("capabilities", { mode: "json" }).$type<("text" | "vision" | "reasoning" | "coding" | "image-gen" | "multilingual" | "multi-agent")[]>(),
   rawInputRateUSD: t.real("raw_input_rate_usd").notNull(),
   rawOutputRateUSD: t.real("raw_output_rate_usd").notNull(),
   inputRateUSD: t.real("input_rate_usd").notNull(),
   outputRateUSD: t.real("output_rate_usd").notNull(),
   imageRateUSD: t.real("image_rate_usd"),
   markupMultiplier: t.real("markup_multiplier").notNull(),
-  minTier: t.text("min_tier", { enum: ["free", "pro"] }).notNull().default("free"),
-  usecase: t.text("usecase", { enum: ["text", "image"] }).notNull().default("text"),
-  isActive: t.integer("is_active", { mode: "boolean" }).notNull().default(true),
   createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-});
+})

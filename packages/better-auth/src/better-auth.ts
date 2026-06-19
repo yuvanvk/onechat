@@ -1,7 +1,9 @@
+
 import { sendEmail } from "./send-email";
-import { betterAuth } from "better-auth";
+import { betterAuth, BetterAuthOptions } from "better-auth";
 import { D1Database, getDB } from "@workspace/db";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { customSession } from "better-auth/plugins";
 
 interface Bindings {
   D1_DATABASE: D1Database;
@@ -12,10 +14,10 @@ interface Bindings {
   RESEND_API_KEY: string;
 }
 
-export const auth = (env: Bindings) => {
+const getOptions = (env: Bindings) => {
   const db = getDB(env.D1_DATABASE);
 
-  return betterAuth({
+  return {
     database: drizzleAdapter(db, { provider: "sqlite" }),
     appName: "OneChat",
     basePath: "/api/v1/auth",
@@ -26,9 +28,8 @@ export const auth = (env: Bindings) => {
     },
     emailVerification: {
       sendOnSignUp: true,
-      sendVerificationEmail: async ({ user, token }, request) => {
+      sendVerificationEmail: async ({ user, token }, _request) => {
         const verifyUrl = `http://localhost:3000/verify-email?token=${encodeURIComponent(token)}`;
-        
         void sendEmail({
           to: user.email,
           subject: "Verify your email address",
@@ -42,8 +43,8 @@ export const auth = (env: Bindings) => {
         sameSite: "None",
         secure: true,
         partitioned: true,
-        httpOnly: true
-      }
+        httpOnly: true,
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     socialProviders: {
@@ -52,5 +53,37 @@ export const auth = (env: Bindings) => {
         clientSecret: env.GOOGLE_CLIENT_SECRET as string,
       },
     },
+    user: {
+      additionalFields: {
+        plan: {
+          type: "string",
+          defaultValue: "free",
+          input: false,
+        },
+      },
+    },
+  } satisfies BetterAuthOptions;
+};
+
+export const auth = (env: Bindings) => {
+  const options = getOptions(env);
+
+  return betterAuth({
+    ...options,
+    plugins: [
+      customSession(
+        async ({ user, session }) => ({
+          user: {
+            ...user,
+            plan: user.plan ?? "free",
+          },
+          session,
+        }),
+        options,
+      ),
+    ],
   });
 };
+
+// Export the type so your client can infer `plan` without importing runtime code
+export type AuthInstance = ReturnType<typeof auth>;

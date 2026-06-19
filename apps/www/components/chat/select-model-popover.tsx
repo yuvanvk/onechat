@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useModel } from "@/store/useModel";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
@@ -24,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 export const SelectModelPopover = () => {
   const {
@@ -39,9 +40,9 @@ export const SelectModelPopover = () => {
   const [search, setSearch] = useState<string>("");
   const [provider, setProvider] = useState("favourites");
 
-  const hasSearch = search.length > 0;
-  console.log(supportedModels[0].favourites);
+  const { data } = authClient.useSession();
   
+  const hasSearch = search.length > 0;
 
   const modelsToDisplayBasedOnProvider = supportedModels
     .filter((x) => x.id == provider)
@@ -192,7 +193,8 @@ export const SelectModelPopover = () => {
                 {displayModels.length > 0 &&
                   displayModels.map((model) => {
                     return (
-                      <div
+                      <button
+                        disabled={data?.user.plan === "free" && !model?.free}
                         key={model?.id}
                         onClick={() => {
                           setModel(model?.id!);
@@ -206,6 +208,7 @@ export const SelectModelPopover = () => {
                               {model?.displayName}
                             </div>
                             <Button
+                              asChild
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 supportedModels[0].favourites!.some((f) => f.id === model?.id)
@@ -216,6 +219,7 @@ export const SelectModelPopover = () => {
                               variant={"ghost"}
                             >
                               <Star
+                                className="w-4 h-4"
                                 stroke={
                                   supportedModels[0].favourites?.find(
                                     (x) => x.id == model?.id,
@@ -311,10 +315,10 @@ export const SelectModelPopover = () => {
                               })}
                           </div>
                         </div>
-                        <div className="text-xs text-neutral-500">
+                        <div className="text-xs text-neutral-500 text-left">
                           {model?.description}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
               </div>

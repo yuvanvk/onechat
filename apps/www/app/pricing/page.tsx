@@ -1,7 +1,9 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check } from "lucide-react";
+import { authClient } from "@/lib/better-auth/auth-client";
+import { toast } from "sonner";
 
 type PlanFeature = {
   label: string;
@@ -52,6 +54,28 @@ const plans: Plan[] = [
 
 export default function Pricing() {
   const router = useRouter();
+  // const session = await authClient.getSession();
+  
+  let session = {
+    data: {
+      session: {
+
+      }
+    }
+  }
+  async function handleCheckout () {
+    if(!session.data?.session) {
+      toast.error("Please Sign Up or Login")
+      router.push("/signup")
+      return
+    }
+    const response = await fetch(
+      "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customerId=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    );
+    const json = await response.json();
+    const redirectUrl = json.checkout_url;
+    redirect(redirectUrl);
+  }
 
   return (
     <div className="max-w-3xl mx-auto w-full py-16 flex flex-col items-center tracking-tight relative">
@@ -120,11 +144,7 @@ export default function Pricing() {
                   size={"lg"}
                   variant={plan.ctaVariant}
                   className="w-full"
-                  onClick={() =>
-                    router.push(
-                      `/billing/checkout?plan=${plan.name.toLowerCase()}`,
-                    )
-                  }
+                  onClick={handleCheckout}
                 >
                   {plan.cta}
                 </Button>

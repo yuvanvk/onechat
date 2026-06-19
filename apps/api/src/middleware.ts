@@ -7,7 +7,6 @@ export const authMiddleware = createMiddleware<{ Bindings: Bindings, Variables: 
     const betterAuth= auth(c.env);
 
     const session = await betterAuth.api.getSession({ headers: c.req.raw.headers });
-    console.log(session);
     
     if(!session) {
         return c.json({ message: "UNAUTHORIZED" }, 401)
@@ -22,4 +21,12 @@ export const dbMiddleware = createMiddleware<{ Bindings: Bindings, Variables: Va
     const db = getDB(c.env.D1_DATABASE);
     c.set("db", db);
     return next()  
+})
+
+export const checkoutMiddleware = createMiddleware<{Bindings: Bindings, Variables: Variables}>(async (c, next) => {
+    const session = c.get("session");
+    if(session?.user.plan === "pro") {
+        return c.json({ message: "Already on Pro Plan"}, 400)
+    }
+    await next();
 })
