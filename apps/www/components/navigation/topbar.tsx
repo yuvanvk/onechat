@@ -49,6 +49,7 @@ export function Topbar() {
         `http://localhost:8787/api/v1/ai/chat/delete/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         },
       );
       await response.json();
@@ -69,6 +70,7 @@ export function Topbar() {
         `http://localhost:8787/api/v1/ai/chat/share/${id}`,
         {
           method: "POST",
+          credentials: "include",
         },
       );
       const { data } = await response.json();

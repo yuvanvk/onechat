@@ -71,6 +71,7 @@ export default function Pricing() {
     }
     const response = await fetch(
       "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customerId=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+      { credentials: "include" },
     );
     const json = await response.json();
     const redirectUrl = json.checkout_url;

@@ -15,6 +15,7 @@ import {
   Filter,
   Globe,
   Image,
+  Lock,
   Search,
   Star,
 } from "lucide-react";
@@ -41,6 +42,9 @@ export const SelectModelPopover = () => {
   const [provider, setProvider] = useState("favourites");
 
   const { data } = authClient.useSession();
+  const userPlan = data?.user.plan ?? "free";
+  console.log(userPlan);
+  
   
   const hasSearch = search.length > 0;
 
@@ -70,7 +74,7 @@ export const SelectModelPopover = () => {
       <div
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1",
+          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1 w-28",
           "cursor-pointer transition-all duration-150 select-none",
           open && "bg-accent",
         )}
@@ -81,7 +85,7 @@ export const SelectModelPopover = () => {
             open && "text-foreground",
           )}
         >
-          {modelName}
+          {modelName.slice(0, 10)}...
         </div>
         <motion.svg
           animate={{ rotate: open ? "180deg" : "0deg" }}
@@ -145,7 +149,7 @@ export const SelectModelPopover = () => {
                   )}
                 >
                   {supportedModels.map((model, idx) => {
-                    const Icon = model.icon;
+                  const Icon = model.icon;
                     return (
                       <div key={idx} className="relative">
                         {provider === model.id && (
@@ -153,7 +157,7 @@ export const SelectModelPopover = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ ease: "linear", duration: 0.1 }}
-                            className="w-px h-6 bg-neutral-300 right-[-19px] absolute top-1/2 -translate-y-1/2"
+                            className="w-px h-6 bg-neutral-300 right-[-19px] absolute top-1/2 -translate-y-2/3"
                           />
                         )}
 
@@ -192,15 +196,18 @@ export const SelectModelPopover = () => {
                 )}
                 {displayModels.length > 0 &&
                   displayModels.map((model) => {
+                    const isLocked = userPlan === "free" && model?.free === false;
                     return (
                       <button
-                        disabled={data?.user.plan === "free" && !model?.free}
+                        disabled={isLocked}
                         key={model?.id}
                         onClick={() => {
                           setModel(model?.id!);
                           setModelName(model?.displayName!);
                         }}
-                        className="flex flex-col select-none cursor-pointer"
+                        className={cn("flex flex-col select-none transition-colors",
+                          isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        )}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
@@ -218,7 +225,7 @@ export const SelectModelPopover = () => {
                               size={"icon-sm"}
                               variant={"ghost"}
                             >
-                              <Star
+                              {isLocked ? <Lock className="w-4 h-4"/> : <Star
                                 className="w-4 h-4"
                                 stroke={
                                   supportedModels[0].favourites?.find(
@@ -235,7 +242,7 @@ export const SelectModelPopover = () => {
                                     : ""
                                 }
                                 size={10}
-                              />
+                              />}
                             </Button>
                           </div>
 

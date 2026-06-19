@@ -2,6 +2,7 @@ export async function uploadToBucket(file: File) {
   try {
     const response = await fetch(`http://localhost:8787/api/v1/r2`, {
       method: "POST",
+      credentials: "include",
       body: JSON.stringify({
         name: file.name,
         type: file.type,

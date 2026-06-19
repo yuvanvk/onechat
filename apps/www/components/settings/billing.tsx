@@ -59,6 +59,7 @@ export const Billing = () => {
   async function handleCheckout() {
     const response = await fetch(
       "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customer_id=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+      { credentials: "include" },
     );
     const json = await response.json();
     redirect(json.checkout_url);

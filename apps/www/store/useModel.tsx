@@ -25,6 +25,7 @@ export const useModel = create<ModelStore>((set, get) => ({
   addToFavourites: async (model) => {
     const response = await fetch("http://localhost:8787/api/v1/ai/favourite", {
       method: "POST",
+      credentials: "include",
       body: JSON.stringify({
         modelId: model.id,
         displayName: model.displayName,
@@ -50,6 +51,7 @@ export const useModel = create<ModelStore>((set, get) => ({
   removeFromFavourites: async (id) => {
     const response = await fetch(`http://localhost:8787/api/v1/ai/favourite/delete/${encodeURIComponent(id)}`, {
       method: "DELETE",
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -66,7 +68,7 @@ export const useModel = create<ModelStore>((set, get) => ({
       )})
   },
   fetch: async () => {
-    const response = await fetch("http://localhost:8787/api/v1/ai/favourite");
+    const response = await fetch("http://localhost:8787/api/v1/ai/favourite", { credentials: "include" });
     const json = await response.json();
 
     if(!response.ok) {

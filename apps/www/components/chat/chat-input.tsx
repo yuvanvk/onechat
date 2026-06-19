@@ -179,6 +179,7 @@ export const ChatInput = () => {
     if (!activeId) {
       const response = await fetch("http://localhost:8787/api/v1/ai/create", {
         method: "POST",
+        credentials: "include",
       });
 
       const { data } = await response.json();

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { and, eq } from "drizzle-orm";
 import { Bindings, Variables } from "@/types";
-import { conversation, favourite } from "@workspace/db";
+import { conversation, favourite, session, user } from "@workspace/db";
 import { FavouriteSchema } from "@/zod";
 
 const router = new Hono<{ Bindings: Bindings; Variables: Variables }>({
@@ -9,11 +9,11 @@ const router = new Hono<{ Bindings: Bindings; Variables: Variables }>({
 });
 
 router.get("/conversations", async (c) => {
-  const userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs";
+  const session = c.get("session");
   const db = c.get("db");
 
   const conversations = await db.query.conversation.findMany({
-    where: eq(conversation.userId, userId!),
+    where: eq(conversation.userId, session?.user.id!),
   });
 
   if (conversations.length === 0) {
@@ -58,11 +58,12 @@ router.get("/conversations/:conversationId", async (c) => {
 
 router.post("/create", async (c) => {
   const db = c.get("db");
+  const session = c.get("session");
   const conversationId = crypto.randomUUID();
 
   await db.insert(conversation).values({
     id: conversationId,
-    userId: "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+    userId: session?.session.userId!,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -99,6 +100,7 @@ router.get("/chat", async (c) => {
 router.delete("/chat/delete/:conversationId", async (c) => {
   try {
     const db = c.get("db");
+    const session = c.get("session");
     const conversationId = c.req.param("conversationId");
 
     if (!conversationId) {
@@ -106,13 +108,13 @@ router.delete("/chat/delete/:conversationId", async (c) => {
     }
 
     const existing = await db.query.conversation.findFirst({
-      where: eq(conversation.id, conversationId),
+      where: and(eq(conversation.id, conversationId), eq(user.id, session?.session.userId!)),
     });
     if (!existing) {
       return c.json({ message: "Invalid Inputs" }, 400);
     }
 
-    await db.delete(conversation).where(eq(conversation.id, conversationId));
+    await db.delete(conversation).where(and(eq(conversation.id, conversationId), eq(user.id, session?.session.userId!)));
     const id = c.env.CONVERSATION.idFromName(conversationId);
     const stub = c.env.CONVERSATION.get(id);
     await stub.destroy();
@@ -120,7 +122,7 @@ router.delete("/chat/delete/:conversationId", async (c) => {
     return c.json({ message: "Conversation deleted successfully" });
   } catch (error) {
     console.log(error);
-    
+
     return c.json({ message: "Interal Server Error" }, 500);
   }
 });
@@ -128,15 +130,18 @@ router.delete("/chat/delete/:conversationId", async (c) => {
 router.post("/chat/share/:conversationId", async (c) => {
   try {
     const db = c.get("db");
+    const session = c.get("session");
     const conversationId = c.req.param("conversationId");
-    console.log(conversationId);
 
     if (!conversationId) {
       return c.json({ message: "Provide conversationId" }, 400);
     }
 
     const existingConversation = await db.query.conversation.findFirst({
-      where: eq(conversation.id, conversationId),
+      where: and(
+        eq(conversation.id, conversationId),
+        eq(user.id, session?.session.userId!),
+      ),
     });
 
     if (!existingConversation) {
@@ -172,11 +177,11 @@ router.post("/chat/share/:conversationId", async (c) => {
 });
 
 router.get("/favourite", async (c) => {
-  const db = await c.get("db");
-  const userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs";
+  const db = c.get("db");
+  const session = c.get("session");
 
   const favourites = await db.query.favourite.findMany({
-    where: eq(favourite.userId, userId),
+    where: eq(favourite.userId, session?.session.userId!),
   });
 
   return c.json({
@@ -197,7 +202,7 @@ router.post("/favourite", async (c) => {
     const body = await c.req.json();
     const db = c.get("db");
 
-    const userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs";
+    const session = c.get("session");
 
     const { success, data } = FavouriteSchema.safeParse(body);
     if (!success) {
@@ -211,7 +216,7 @@ router.post("/favourite", async (c) => {
       displayName: data.displayName,
       description: data.description,
       capabilities: data.capabilites,
-      userId,
+      userId: session?.session.userId!,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -226,7 +231,7 @@ router.post("/favourite", async (c) => {
 router.delete("/favourite/delete/:modelId", async (c) => {
   try {
     const id = c.req.param("modelId");
-    const userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs";
+    const session = c.get("session");
     const db = c.get("db");
     if (!id) {
       c.json({ message: "Invalid inputs" }, 400);
@@ -235,7 +240,12 @@ router.delete("/favourite/delete/:modelId", async (c) => {
 
     await db
       .delete(favourite)
-      .where(and(eq(favourite.modelId, id), eq(favourite.userId, userId)));
+      .where(
+        and(
+          eq(favourite.modelId, id),
+          eq(favourite.userId, session?.session.id!),
+        ),
+      );
 
     return c.json({ message: "Removed from favourites" }, 200);
   } catch (error) {

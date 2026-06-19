@@ -65,6 +65,7 @@ export const CommandBox = () => {
       "http://localhost:8787/api/v1/ai/create",
       {
         method: "POST",
+        credentials: "include",
       },
     );
     const { data, message } = await response.json();

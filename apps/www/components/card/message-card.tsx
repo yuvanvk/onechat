@@ -118,7 +118,7 @@ export function MessageCard({
     if (!imageKey) return;
 
     try {
-      const response = await window.fetch(getImageUrl(encodeURIComponent(imageKey)));
+      const response = await window.fetch(getImageUrl(encodeURIComponent(imageKey)), { credentials: "include" });
       if (!response.ok) {
         throw new Error("Failed to download image");
       }

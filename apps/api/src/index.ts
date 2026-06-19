@@ -38,7 +38,7 @@ const routes = [
 ];
 
 const api = app.basePath("/api/v1");
-// api.use("/ai/*", authMiddleware);
+api.use("/ai/*", authMiddleware);
 
 routes.forEach(({ path, router }) => api.route(path, router));
 

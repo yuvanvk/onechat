@@ -30,8 +30,8 @@ export const Chat = () => {
   }, [id, setConversationId, fetch]);
 
   useEffect(() => {
-    if (data?.session) {
-      router.push("/")
+    if (!data?.session) {
+      router.push("/signup")
     }
   }, [data?.session])
 

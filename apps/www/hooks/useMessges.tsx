@@ -20,7 +20,7 @@ export function useMessage(id: string) {
       try {
         const response = await fetch(
           `http://localhost:8787/api/v1/ai/conversations/${id}`,
-          { signal: abortController.signal },
+          { signal: abortController.signal, credentials: "include" },
         );
         const { data, message } = await response.json();
 

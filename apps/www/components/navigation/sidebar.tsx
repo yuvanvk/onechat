@@ -106,6 +106,7 @@ export const AppSidebar = () => {
               "http://localhost:8787/api/v1/ai/create",
               {
                 method: "POST",
+                credentials: "include",
               },
             );
             const { data } = await response.json();
@@ -172,7 +173,7 @@ export const AppSidebar = () => {
           <SidebarMenuItem className="flex items-center justify-between gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="outline-none! focus:ring-0! ">
+                <SidebarMenuButton className="outline-none! focus:ring-0!">
                   <div className="w-5 h-5 bg-blue-500 border border-blue-400 rounded-full" />
                   {data?.user.name}
                 </SidebarMenuButton>
@@ -275,7 +276,13 @@ export const AppSidebar = () => {
                       })}
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-sm">
+                  <DropdownMenuItem className="text-sm" onClick={() => {
+                    if(data?.session) {
+                      authClient.signOut()
+                    } else {
+                      router.push("/signup")
+                    }
+                  }}>
                     {data?.session ? (
                       <>
                         <LogOut className="text-neutral-400" />
