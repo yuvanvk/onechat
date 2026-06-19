@@ -28,11 +28,11 @@ router.get("/conversations", async (c) => {
 
 router.get("/conversations/:conversationId", async (c) => {
   const db = c.get("db");
-
+  const session = c.get("session");
   const conversationId = c.req.param("conversationId");
   const validConversation = await db.query.conversation.findFirst({
-    where: eq(conversation.id, conversationId),
-  });
+    where: and(eq(conversation.id, conversationId), eq(conversation.userId, session?.user.id!)),
+  });  
 
   if (!validConversation) {
     return c.json(
@@ -63,7 +63,7 @@ router.post("/create", async (c) => {
 
   await db.insert(conversation).values({
     id: conversationId,
-    userId: session?.session.userId!,
+    userId: session?.user.id!,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -74,13 +74,14 @@ router.post("/create", async (c) => {
 router.get("/chat", async (c) => {
   try {
     const db = c.get("db");
+    const session = c.get("session");
     let { conversationId } = c.req.query();
 
     if (!conversationId) {
       return c.json({ message: "Conversation id is required" }, 400);
     }
     const existing = await db.query.conversation.findFirst({
-      where: eq(conversation.id, conversationId),
+      where: and(eq(conversation.id, conversationId), eq(conversation.userId, session?.user.id!)),
     });
 
     if (!existing) {
@@ -108,13 +109,13 @@ router.delete("/chat/delete/:conversationId", async (c) => {
     }
 
     const existing = await db.query.conversation.findFirst({
-      where: and(eq(conversation.id, conversationId), eq(user.id, session?.session.userId!)),
+      where: and(eq(conversation.id, conversationId), eq(conversation.userId, session?.user.id!)),
     });
     if (!existing) {
       return c.json({ message: "Invalid Inputs" }, 400);
     }
 
-    await db.delete(conversation).where(and(eq(conversation.id, conversationId), eq(user.id, session?.session.userId!)));
+    await db.delete(conversation).where(and(eq(conversation.id, conversationId), eq(conversation.userId, session?.session.userId!)));
     const id = c.env.CONVERSATION.idFromName(conversationId);
     const stub = c.env.CONVERSATION.get(id);
     await stub.destroy();
@@ -140,7 +141,7 @@ router.post("/chat/share/:conversationId", async (c) => {
     const existingConversation = await db.query.conversation.findFirst({
       where: and(
         eq(conversation.id, conversationId),
-        eq(user.id, session?.session.userId!),
+        eq(conversation.userId, session?.user.id!),
       ),
     });
 
@@ -161,7 +162,6 @@ router.post("/chat/share/:conversationId", async (c) => {
       .set({ shareLink: link })
       .where(eq(conversation.id, conversationId))
       .returning();
-    console.log(updated.shareLink);
 
     return c.json(
       {
@@ -181,7 +181,7 @@ router.get("/favourite", async (c) => {
   const session = c.get("session");
 
   const favourites = await db.query.favourite.findMany({
-    where: eq(favourite.userId, session?.session.userId!),
+    where: eq(favourite.userId, session?.user.id!),
   });
 
   return c.json({
@@ -206,8 +206,7 @@ router.post("/favourite", async (c) => {
 
     const { success, data } = FavouriteSchema.safeParse(body);
     if (!success) {
-      c.json({ message: "Invalid Inputs" }, 400);
-      return;
+      return c.json({ message: "Invalid Inputs" }, 400);
     }
 
     await db.insert(favourite).values({
@@ -216,7 +215,7 @@ router.post("/favourite", async (c) => {
       displayName: data.displayName,
       description: data.description,
       capabilities: data.capabilites,
-      userId: session?.session.userId!,
+      userId: session?.user.id!,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -234,8 +233,7 @@ router.delete("/favourite/delete/:modelId", async (c) => {
     const session = c.get("session");
     const db = c.get("db");
     if (!id) {
-      c.json({ message: "Invalid inputs" }, 400);
-      return;
+      return c.json({ message: "Invalid inputs" }, 400);
     }
 
     await db
@@ -243,7 +241,7 @@ router.delete("/favourite/delete/:modelId", async (c) => {
       .where(
         and(
           eq(favourite.modelId, id),
-          eq(favourite.userId, session?.session.id!),
+          eq(favourite.userId, session?.user.id!),
         ),
       );
 

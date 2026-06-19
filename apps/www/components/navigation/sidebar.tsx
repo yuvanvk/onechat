@@ -207,7 +207,7 @@ export const AppSidebar = () => {
                       Credits
                     </div>
                     <div className="text-muted-foreground">
-                      {data?.user.creditBalance }
+                      {data?.user.creditBalance}
                     </div>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -276,13 +276,16 @@ export const AppSidebar = () => {
                       })}
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-sm" onClick={() => {
-                    if(data?.session) {
-                      authClient.signOut()
-                    } else {
-                      router.push("/signup")
-                    }
-                  }}>
+                  <DropdownMenuItem
+                    className="text-sm"
+                    onClick={() => {
+                      if (data?.session) {
+                        authClient.signOut();
+                      } else {
+                        router.push("/signup");
+                      }
+                    }}
+                  >
                     {data?.session ? (
                       <>
                         <LogOut className="text-neutral-400" />
@@ -300,12 +303,10 @@ export const AppSidebar = () => {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className="w-fit font-medium"
-                >
-                  {data?.user.creditBalance && data.user.creditBalance * 0.0001}
-                  $
+                <Button variant={"outline"} className="w-fit font-medium">
+                  ${" "}
+                  {data?.user.creditBalance &&
+                    (data.user.creditBalance * 0.0001).toFixed(4)}
                 </Button>
               </DropdownMenuTrigger>
             </DropdownMenu>

@@ -39,6 +39,11 @@ const routes = [
 
 const api = app.basePath("/api/v1");
 api.use("/ai/*", authMiddleware);
+api.use("/share/*", authMiddleware);
+api.use("/r2/*", authMiddleware);
+api.use("/checkout/*", authMiddleware);
+api.use("/webhook/*", authMiddleware);
+api.use("/settings/*", authMiddleware);
 
 routes.forEach(({ path, router }) => api.route(path, router));
 
