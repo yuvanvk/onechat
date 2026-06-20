@@ -18,8 +18,8 @@ interface ModelStore {
 }
 export const useModel = create<ModelStore>((set, get) => ({
   supportedModels: SELECT_MODELS,
-  modelId: "@cf/moonshotai/kimi-k2.6",
-  modelName: "Kimi K2",
+  modelId: "@cf/mistralai/mistral-small-3.1-24b-instruct",
+  modelName: "Mistral Small 3.1 24B",
   setModel: (modelId) => set({ modelId }),
   setModelName: (name) => set({ modelName: name }),
   addToFavourites: async (model) => {

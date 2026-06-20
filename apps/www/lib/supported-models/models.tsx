@@ -420,7 +420,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "DeepSeek R1 Distill Qwen 32b",
         description:
           "DeepSeek-R1-Distill-Qwen-32B is a model distilled from DeepSeek-R1 based on Qwen2.5. It outperforms OpenAI-o1-mini across various benchmarks, achieving new state-of-the-art results for dense models.",
-        free: true,
+        free: false,
         capabilities: ["text", "reasoning", "coding"],
       },
     ],

@@ -37,7 +37,7 @@ interface StreamResult {
 
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
-  private userId = "HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs"; // TODO: pass from request
+  private userId: string | null = null;
   private abortController = new AbortController();
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -55,6 +55,7 @@ export class Conversation extends DurableObject<Env> {
   }
 
   async fetch(request: Request): Promise<Response> {
+    this.userId = request.headers.get("x-user-id") as string;    
     const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
     return new Response(null, { status: 101, webSocket: client });
@@ -84,6 +85,8 @@ export class Conversation extends DurableObject<Env> {
     message: WebSocketCreateStreamMessage,
   ) {
     this.abortController = new AbortController();
+    console.log("inside stream -> ", this.userId);
+    
     const { conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];
 
@@ -162,7 +165,7 @@ export class Conversation extends DurableObject<Env> {
         },
       );
     } catch (error) {
-      await Credit.release(this.userId, estimatedCredits, conversationId);
+      await Credit.release(this.userId!, estimatedCredits, conversationId);
       if (
         this.abortController.signal.aborted ||
         (error instanceof Error && error.name === "AbortError")
@@ -216,7 +219,7 @@ export class Conversation extends DurableObject<Env> {
     );
 
     await Credit.settle(
-      this.userId,
+      this.userId!,
       estimatedCredits,
       Credit.calculate(model, actualInputTokens, actualOutputTokens),
       model,
@@ -287,7 +290,7 @@ export class Conversation extends DurableObject<Env> {
         },
       );
     } catch (error) {
-      await Credit.release(this.userId, estimatedCredits, conversationId);
+      await Credit.release(this.userId!, estimatedCredits, conversationId);
       console.error("Regenerate error:", error);
       this.sendErrorMessage(
         ws,
@@ -315,7 +318,7 @@ export class Conversation extends DurableObject<Env> {
     );
 
     await Credit.settle(
-      this.userId,
+      this.userId!,
       estimatedCredits,
       Credit.calculate(model, actualInputTokens, actualOutputTokens),
       model,
@@ -386,7 +389,7 @@ export class Conversation extends DurableObject<Env> {
           Date.now(),
         ),
         Credit.settle(
-          this.userId,
+          this.userId!,
           estimatedCredits,
           estimatedCredits,
           model,
@@ -406,7 +409,7 @@ export class Conversation extends DurableObject<Env> {
         } satisfies WebSocketImageGenerated),
       );
     } catch (error) {
-      await Credit.release(this.userId, estimatedCredits, conversationId);
+      await Credit.release(this.userId!, estimatedCredits, conversationId);
       console.error("Image generation error:", error);
       this.sendErrorMessage(ws, "Unable to Generate Image", conversationId);
     }
@@ -418,7 +421,7 @@ export class Conversation extends DurableObject<Env> {
     estimatedCredits: number,
     conversationId: string,
   ): Promise<boolean> {
-    const hasAccess = await User.hasAccess(this.userId, model);
+    const hasAccess = await User.hasAccess(this.userId!, model);
     if (!hasAccess) {
       this.sendErrorMessage(
         ws,
@@ -429,7 +432,7 @@ export class Conversation extends DurableObject<Env> {
     }
 
     const reserved = await Credit.reserve(
-      this.userId,
+      this.userId!,
       estimatedCredits,
       model,
       conversationId,

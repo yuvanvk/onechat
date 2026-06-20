@@ -91,7 +91,15 @@ router.get("/chat", async (c) => {
     const id = c.env.CONVERSATION.idFromName(conversationId);
     const stub = c.env.CONVERSATION.get(id);
 
-    return stub.fetch(c.req.raw);
+    const reqWithUser = new Request(c.req.raw, {
+      headers: {
+        ...Object.fromEntries(c.req.raw.headers),
+        "x-user-id": session?.user.id!,
+      },
+    });
+  
+
+    return stub.fetch(reqWithUser);
   } catch (error) {
     console.error(error);
     return c.json({ message: "Internal Server Error" }, 500);
