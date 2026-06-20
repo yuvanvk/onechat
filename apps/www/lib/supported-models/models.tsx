@@ -240,7 +240,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "Claude Haiku 4.5",
         description:
           "Anthropic's fastest and most compact Claude model, delivering quick responses at the lowest cost.",
-        free: true,
+        free: false,
         capabilities: ["text", "coding"],
       },
       {
@@ -270,7 +270,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "Llama 4 Scout",
         description:
           "Meta's 17B natively multimodal model with 16 experts, optimized for vision and agentic tasks.",
-        free: false,
+        free: true,
         capabilities: ["text", "vision", "multilingual"],
       },
       {
@@ -286,7 +286,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "Llama 3.2 11B Vision",
         description:
           "Llama 3.2 vision model optimized for visual recognition, image reasoning, and captioning.",
-        free: false,
+        free: true,
         capabilities: ["text", "vision"],
       },
     ],
@@ -300,7 +300,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "Kimi K2",
         description:
           "Moonshot AI's frontier MoE model with 1T parameters, excelling at long-horizon coding and agentic tasks.",
-        free: true,
+        free: false,
         capabilities: ["vision", "reasoning", "coding"],
       },
     ],
@@ -352,7 +352,7 @@ export const SELECT_MODELS: ModelProvider[] = [
         displayName: "Mistral Small 3.1 24B",
         description:
           "24B instruction-tuned variant of Mistral Small 3.1 with vision support and strong multilingual performance.",
-        free: false,
+        free: true,
         capabilities: ["text", "vision", "multilingual"],
       },
       {

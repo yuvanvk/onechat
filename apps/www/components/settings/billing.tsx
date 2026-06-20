@@ -9,6 +9,7 @@ import {
 import { motion } from "motion/react";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 
 
@@ -58,11 +59,25 @@ export const Billing = () => {
 
   async function handleCheckout() {
     const response = await fetch(
-      "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customer_id=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+      `http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3`,
       { credentials: "include" },
     );
     const json = await response.json();
     redirect(json.checkout_url);
+  }
+
+  async function handleCancel() {
+    const response = await fetch("http://localhost:8787/api/v1/dodo/subscription/cancel", {
+      method: "POST",
+      credentials: "include"
+    })
+
+    if(!response.ok) {
+      toast.error("Subscription cancellation failed. Please try again later")
+      return
+    }
+    const result = await response.json();
+    toast.success(result.message)
   }
 
   return (
@@ -109,6 +124,7 @@ export const Billing = () => {
               size={"sm"}
               onClick={async () => {
                 if (plan === "free") await handleCheckout();
+                if (plan === "pro") await handleCancel();
               }}
             >
               {plan === "free" ? "Upgrade" : "Cancel Plan"}

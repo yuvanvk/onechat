@@ -10,24 +10,27 @@ router.post("/dodo", (c) => {
   const db = c.get("db");
 
   return Webhooks({
-    webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY!,
+    webhookKey: c.env.DODO_PAYMENTS_WEBHOOK_KEY!,
     onSubscriptionActive: async (event) => {
+      const customereEmail = event.data.customer.email;
       const customerId = event.data.customer.customer_id;
 
-      await db
+      const [update] = await db
         .update(user)
         .set({
           plan: "pro",
           credit_balance: 200_000,
           subscriptionId: event.data.subscription_id,
+          customerId,
           cancelAtNextBillingDate: false,
           updatedAt: new Date(),
         })
-        .where(eq(user.id, customerId));
+        .where(eq(user.email, customereEmail))
+        .returning()
 
       await db.insert(creditLedger).values({
         id: crypto.randomUUID(),
-        userId: customerId,
+        userId: update.id,
         type: "grant",
         amount: 200_000,
         createdAt: new Date(),
@@ -36,33 +39,42 @@ router.post("/dodo", (c) => {
     onSubscriptionRenewed: async (event) => {
       const customerId = event.data.customer.customer_id;
 
-      await db
+      const [update] = await db
         .update(user)
         .set({
-          credit_balance: 500_000,
+          credit_balance: 200_000,
           cancelAtNextBillingDate: false,
           updatedAt: new Date(),
         })
-        .where(eq(user.id, customerId));
+        .where(eq(user.customerId, customerId))
+        .returning()
 
       await db.insert(creditLedger).values({
         id: crypto.randomUUID(),
-        userId: customerId,
+        userId: update.id,
         type: "grant",
         amount: 200_000,
         createdAt: new Date(),
       });
     },
-    onSubscriptionCancellationScheduled: async (event) => {
+    onSubscriptionUpdated: async (event) => {
       const customerId = event.data.customer.customer_id;
       // Don't downgrade yet — they paid through the end of period
-      await db
+      console.log("Cancellation event:", JSON.stringify(event, null, 2));
+      console.log("customerId from Dodo:", customerId);
+      console.log(event.data.status);
+      
+      const [update] = await db
         .update(user)
         .set({
           cancelAtNextBillingDate: true,
           updatedAt: new Date(),
         })
-        .where(eq(user.id, customerId));
+        .where(eq(user.customerId, customerId))
+        .returning()
+
+      console.log(update);
+      
     },
     onSubscriptionCancelled: async (event) => {
       const customerId = event.data.customer.customer_id;
@@ -76,7 +88,7 @@ router.post("/dodo", (c) => {
           cancelAtNextBillingDate: false,
           updatedAt: new Date(),
         })
-        .where(eq(user.id, customerId));
+        .where(eq(user.customerId, customerId));
     },
     onPaymentFailed: async (event) => {
       console.warn(

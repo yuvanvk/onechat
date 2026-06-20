@@ -42,6 +42,12 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["Conversation"]
-    }
-  ]
+    },
+  ],
+  "triggers": {
+    "crons": ["0 0 1 * *"]
+  },
+  "vars": {
+    "ENVIRONMENT": "development"
+  }
 }

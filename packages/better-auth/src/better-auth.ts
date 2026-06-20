@@ -12,6 +12,7 @@ interface Bindings {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   RESEND_API_KEY: string;
+  ENVIRONMENT: string
 }
 
 const getOptions = (env: Bindings) => {
@@ -30,11 +31,12 @@ const getOptions = (env: Bindings) => {
       sendOnSignUp: true,
       sendVerificationEmail: async ({ user, token }, _request) => {
         const verifyUrl = `http://localhost:3000/verify-email?token=${encodeURIComponent(token)}`;
-        void sendEmail({
+        await sendEmail({
           to: user.email,
           subject: "Verify your email address",
           text: `Click the link to verify your email: ${verifyUrl}`,
-        });
+          apiKey: env.RESEND_API_KEY,
+        }).catch(err => console.error("Email send failed:", err));
       },
     },
     baseURL: env.BETTER_AUTH_URL,
@@ -63,7 +65,7 @@ const getOptions = (env: Bindings) => {
         },
         creditBalance: {
           type: "number",
-          defaultValue: 0,
+          defaultValue: 20_000,
           input: false,
           fieldName: "credit_balance"
         }
@@ -90,6 +92,14 @@ export const auth = (env: Bindings) => {
         options,
       ),
     ],
+    advanced: {
+      defaultCookieAttributes: {
+        sameSite: env.ENVIRONMENT === "production" ? "None" : "Lax",
+        secure: env.ENVIRONMENT === "production",
+        partitioned: env.ENVIRONMENT === "production",
+        httpOnly: true,
+      },
+    }
   });
 };
 

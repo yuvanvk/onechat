@@ -51,7 +51,7 @@ export const SignUp = () => {
     }
   }, [data?.session]);
   
-  async function handleLogin() {
+  async function handleSignUp() {
     if (!email || !password || !username) {
       return;
     }
@@ -62,6 +62,7 @@ export const SignUp = () => {
       name: username,
       callbackURL: "http://localhost:3000/login",
     });
+    
   }
 
   return (
@@ -146,30 +147,13 @@ export const SignUp = () => {
           </div>
 
           <Button
-            onClick={handleLogin}
+            onClick={handleSignUp}
             className={cn(
-              "bg-secondary text-secondary-foreground border-border mt-2",
+              "bg-secondary text-secondary-foreground border-border mt-2 hover:bg-secondary/90",
             )}
           >
             <FingerprintPattern />
             SignUp
-          </Button>
-
-          <div className="flex items-center gap-2 w-full">
-            <hr className="grow border-t border-border" />
-            <span className="text-muted-foreground text-xs font-medium">
-              or
-            </span>
-            <hr className="grow border-t border-border" />
-          </div>
-
-          <Button
-            className={cn(
-              "bg-secondary text-secondary-foreground border-border",
-            )}
-          >
-            <FcGoogle />
-            Google
           </Button>
         </div>
       </div>
