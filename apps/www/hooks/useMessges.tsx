@@ -2,7 +2,6 @@
 
 import { useChatStore } from "@/store/useChat";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export function useMessage(id: string) {
   const { setMessages, pendingMessage } = useChatStore();
@@ -22,7 +21,7 @@ export function useMessage(id: string) {
           `http://localhost:8787/api/v1/ai/conversations/${id}`,
           { signal: abortController.signal, credentials: "include" },
         );
-        const { data, message } = await response.json();
+        const { data } = await response.json();
 
         setMessages(data.messages ?? []);
       } catch (error) {

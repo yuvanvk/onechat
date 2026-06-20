@@ -1,5 +1,4 @@
 import { Attachment } from "@/utils/process-file";
-import { uploadToBucket } from "@/utils/upload-to-bucket";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { FileText, RotateCcw, X } from "lucide-react";

@@ -84,7 +84,6 @@ export function MessageCard({
   role,
   imageKey,
   images,
-  pdfs,
   model = "@cf/moonshotai/kimi-k2.6",
 }: Message) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);

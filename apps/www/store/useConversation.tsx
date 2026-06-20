@@ -1,6 +1,5 @@
 import { Conversation } from "@workspace/types";
 import { create } from "zustand";
-import { toast } from "sonner";
 
 interface ConversationStore {
   conversations: Conversation[];
@@ -21,7 +20,7 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
 
   fetch: async () => {
     const response = await fetch(`http://localhost:8787/api/v1/ai/conversations`, { credentials: "include" });
-    const { message, data } = await response.json();
+    const { data } = await response.json();
     set({ conversations: data.conversations ?? [] });
   },
 }));

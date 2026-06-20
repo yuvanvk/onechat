@@ -2,7 +2,6 @@
 // `id` is a slugified version of modelId, used as the primary key seed value.
 // createdAt / updatedAt are set to the seed time at insert; replace `SEED_TIME` as needed.
 
-import type { InferInsertModel } from "drizzle-orm";
 // import { model } from "./schema"; // adjust import path to your schema file
 
 const SEED_TIME = new Date();

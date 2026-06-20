@@ -43,8 +43,6 @@ export const SignUp = () => {
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-
   const { data } = authClient.useSession();
 
   useEffect(() => {

@@ -5,7 +5,6 @@ import { useChatStore } from "@/store/useChat";
 import { useParams, useRouter } from "next/navigation";
 import { MessageCard } from "@/components/card/message-card";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function SharedConversationPage() {
   const router = useRouter();

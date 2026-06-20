@@ -114,43 +114,59 @@ export class Conversation extends DurableObject<Env> {
       images: [],
     });
 
-    // Build content block (text + optional images)
-    const contentBlock = await this.buildContentBlock(
-      content,
-      objects,
-      userMessageId,
-      provider,
-    );
+    const hasImages =
+      objects?.some((object) => object.type.startsWith("image/")) ?? false;
+
+    const currentContent = hasImages
+      ? await this.buildContentBlock(content, objects, userMessageId, provider)
+      : content;
 
     const history = this.messages
       .slice(0, -1)
-      .map((m) => ({ role: m.role, content: m.content }));
+      .filter(
+        (message): message is Message & { content: string } =>
+          typeof message.content === "string",
+      )
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
 
     let result: StreamResult;
     try {
       const stream = (await this.env.AI.run(
         model,
         {
-          messages: [...history, { role, content: contentBlock }],
+          messages: [
+            ...history,
+            { role, content: currentContent },
+          ],
           stream: true,
           metadata: true,
         },
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
-      result = await this.readStream(stream, this.abortController.signal, (token) => {
-        ws.send(
-          JSON.stringify({
-            type: "chat.stream.response",
-            role: "assistant" as Role.Assistant,
-            content: token,
-            conversationId,
-          } satisfies WebSocketStreamAIResponse),
-        );
-      });
+      result = await this.readStream(
+        stream,
+        this.abortController.signal,
+        (token) => {
+          ws.send(
+            JSON.stringify({
+              type: "chat.stream.response",
+              role: "assistant" as Role.Assistant,
+              content: token,
+              conversationId,
+            } satisfies WebSocketStreamAIResponse),
+          );
+        },
+      );
     } catch (error) {
       await Credit.release(this.userId, estimatedCredits, conversationId);
-      if (this.abortController.signal.aborted || error instanceof Error && error.name === "AbortError") {
+      if (
+        this.abortController.signal.aborted ||
+        (error instanceof Error && error.name === "AbortError")
+      ) {
         console.log(`Stream aborted: ${conversationId}`);
         this.sendErrorMessage(ws, "Request was cancelled.", conversationId);
       } else {
@@ -161,7 +177,7 @@ export class Conversation extends DurableObject<Env> {
           conversationId,
         );
       }
-      return
+      return;
     }
 
     const { fullContent, actualInputTokens, actualOutputTokens } = result;
@@ -273,7 +289,11 @@ export class Conversation extends DurableObject<Env> {
     } catch (error) {
       await Credit.release(this.userId, estimatedCredits, conversationId);
       console.error("Regenerate error:", error);
-      this.sendErrorMessage(ws, "Unable to process request. Please try again later.", conversationId)
+      this.sendErrorMessage(
+        ws,
+        "Unable to process request. Please try again later.",
+        conversationId,
+      );
       return;
     }
 

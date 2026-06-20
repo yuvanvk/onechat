@@ -36,6 +36,8 @@ export const ChatInput = () => {
     isStreaming,
   } = useChatStore();
 
+  const { supportedModels } = useModel();
+
   const [input, setInput] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
@@ -161,7 +163,7 @@ export const ChatInput = () => {
     if (!pendingMessage || !id) return;
     const messageToSend = pendingMessage;
     try {
-      setIsStreaming(true)
+      setIsStreaming(true);
       send(messageToSend);
       setPendingMessage(null);
     } catch (error) {
@@ -171,7 +173,28 @@ export const ChatInput = () => {
     }
   }, [pendingMessage, id, send]);
 
+  function checkModelCapability(modelId: string): boolean {
+    const model = supportedModels
+      .flatMap((provider) => provider.models ?? [])
+      .find((model) => model.id === modelId);
+  
+    if (!model) return false;
+  
+    const hasImages = objects.some((object) =>
+      object.type.startsWith("image/"),
+    );
+  
+    if (!hasImages) return true;
+    return model.capabilities.includes("vision");
+  }
+
+
   async function handleAIResponse() {
+    if(!checkModelCapability(modelId)) {
+      toast.error("This model doest not support image/pdf inputs.")
+      return;
+    }
+    
     const content = input;
     setInput("");
     setAttachments([]);
@@ -368,7 +391,7 @@ export const ChatInput = () => {
               }}
               variant={"outline"}
             >
-              <Square size={20}/>
+              <Square size={20} />
             </Button>
           ) : (
             <Button

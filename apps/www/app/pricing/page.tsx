@@ -2,7 +2,6 @@
 import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check } from "lucide-react";
-import { authClient } from "@/lib/better-auth/auth-client";
 import { toast } from "sonner";
 
 type PlanFeature = {
