@@ -74,6 +74,7 @@ const getOptions = (env: Bindings) => {
   } satisfies BetterAuthOptions;
 };
 
+
 export const auth = (env: Bindings) => {
   const options = getOptions(env);
 
@@ -92,14 +93,14 @@ export const auth = (env: Bindings) => {
         options,
       ),
     ],
-    // advanced: {
-    //   defaultCookieAttributes: {
-    //     sameSite: env.ENVIRONMENT === "production" ? "None" : "Lax",
-    //     secure: env.ENVIRONMENT === "production",
-    //     partitioned: env.ENVIRONMENT === "production",
-    //     httpOnly: true,
-    //   },
-    // }
+    advanced: {
+      defaultCookieAttributes: {
+        sameSite: env.ENVIRONMENT === "production" ? "None" : "Lax",
+        secure: env.ENVIRONMENT === "production",
+        partitioned: env.ENVIRONMENT === "production",
+        httpOnly: true,
+      },
+    }
   });
 };
 
