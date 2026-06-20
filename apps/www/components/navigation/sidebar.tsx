@@ -153,6 +153,7 @@ export const AppSidebar = () => {
                   router.push(`/c/${conversation.id}`);
                 }}
                 key={conversation.id}
+                className="whitespace-nowrap"
               >
                 <SidebarMenuButton
                   className={cn(
@@ -306,7 +307,7 @@ export const AppSidebar = () => {
                 <Button variant={"outline"} className="w-fit font-medium">
                   ${" "}
                   {data?.user.creditBalance &&
-                    (data.user.creditBalance * 0.0001).toFixed(4)}
+                    (data.user.creditBalance * 0.0001).toFixed(2)}
                 </Button>
               </DropdownMenuTrigger>
             </DropdownMenu>

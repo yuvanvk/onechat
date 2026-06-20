@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { useChatStore } from "@/store/useChat";
@@ -10,7 +10,6 @@ import { AttachmentChip } from "./attachment-chip";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SelectModelPopover } from "./select-model-popover";
 import { Attachment, processFiles } from "@/utils/process-file";
 import { uploadToBucket } from "@/utils/upload-to-bucket";
 import {
@@ -33,6 +32,8 @@ export const ChatInput = () => {
     conversationId,
     setConversationId,
     setPendingMessage,
+    setIsStreaming,
+    isStreaming,
   } = useChatStore();
 
   const [input, setInput] = useState<string>("");
@@ -160,6 +161,7 @@ export const ChatInput = () => {
     if (!pendingMessage || !id) return;
     const messageToSend = pendingMessage;
     try {
+      setIsStreaming(true)
       send(messageToSend);
       setPendingMessage(null);
     } catch (error) {
@@ -192,7 +194,7 @@ export const ChatInput = () => {
           role: Role.User,
           content,
           conversationId: activeId,
-          model: "@cf/black-forest-labs/flux-1-schnell",
+          model: modelId,
         });
         addMessage({
           id: "new-user-message",
@@ -236,6 +238,7 @@ export const ChatInput = () => {
       router.push(`/c/${activeId}`);
       return;
     }
+    setIsStreaming(true);
     if (isModelImageGen(modelId)) {
       addMessage({
         id: "new-user-message",
@@ -289,7 +292,6 @@ export const ChatInput = () => {
           model: modelId,
         };
       }
-      console.log(createMessage);
       send(createMessage);
     } catch (error) {
       if (error instanceof Error) {
@@ -358,37 +360,49 @@ export const ChatInput = () => {
         </>
 
         <div className={cn("flex items-center gap-1.5 pb-1 px-1")}>
-          <Button
-            size={"icon-sm"}
-            disabled={!hasInput}
-            onClick={handleAIResponse}
-            className={cn(" rounded-lg")}
-          >
-            <motion.div
-              animate={{ rotate: hasInput ? "-90deg" : "0deg" }}
-              transition={{
-                type: "spring",
-                damping: 13,
+          {isStreaming ? (
+            <Button
+              size={"icon-sm"}
+              onClick={() => {
+                send({ type: "chat.stream.cancel", conversationId });
               }}
+              variant={"outline"}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-right"
-                aria-hidden="true"
+              <Square size={20}/>
+            </Button>
+          ) : (
+            <Button
+              size={"icon-sm"}
+              disabled={!hasInput}
+              onClick={handleAIResponse}
+              className={cn(" rounded-lg")}
+            >
+              <motion.div
+                animate={{ rotate: hasInput ? "-90deg" : "0deg" }}
+                transition={{
+                  type: "spring",
+                  damping: 13,
+                }}
               >
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
-              </svg>
-            </motion.div>
-          </Button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-arrow-right"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </motion.div>
+            </Button>
+          )}
         </div>
       </div>
     </motion.div>

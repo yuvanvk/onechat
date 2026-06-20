@@ -113,14 +113,6 @@ export class Conversation extends DurableObject<Env> {
       pdfs: [],
       images: [],
     });
-    this.ctx.storage.sql.exec(
-      InsertIntoMessage,
-      userMessageId,
-      role,
-      content,
-      model,
-      Date.now(),
-    );
 
     // Build content block (text + optional images)
     const contentBlock = await this.buildContentBlock(
@@ -134,7 +126,7 @@ export class Conversation extends DurableObject<Env> {
       .slice(0, -1)
       .map((m) => ({ role: m.role, content: m.content }));
 
-    let result: StreamResult | null = null;
+    let result: StreamResult;
     try {
       const stream = (await this.env.AI.run(
         model,
@@ -146,7 +138,7 @@ export class Conversation extends DurableObject<Env> {
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
-      result = await this.readStream(stream, (token) => {
+      result = await this.readStream(stream, this.abortController.signal, (token) => {
         ws.send(
           JSON.stringify({
             type: "chat.stream.response",
@@ -158,8 +150,9 @@ export class Conversation extends DurableObject<Env> {
       });
     } catch (error) {
       await Credit.release(this.userId, estimatedCredits, conversationId);
-      if (error instanceof Error && error.name === "AbortError") {
+      if (this.abortController.signal.aborted || error instanceof Error && error.name === "AbortError") {
         console.log(`Stream aborted: ${conversationId}`);
+        this.sendErrorMessage(ws, "Request was cancelled.", conversationId);
       } else {
         console.error(`Stream error: ${conversationId}`, error);
         this.sendErrorMessage(
@@ -168,11 +161,20 @@ export class Conversation extends DurableObject<Env> {
           conversationId,
         );
       }
-      return;
+      return
     }
 
     const { fullContent, actualInputTokens, actualOutputTokens } = result;
     const aiMessageId = crypto.randomUUID();
+
+    this.ctx.storage.sql.exec(
+      InsertIntoMessage,
+      userMessageId,
+      role,
+      content,
+      model,
+      Date.now(),
+    );
 
     this.messages.push({
       role: "assistant" as Role.Assistant,
@@ -253,20 +255,25 @@ export class Conversation extends DurableObject<Env> {
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
 
-      result = await this.readStream(stream, (token) => {
-        ws.send(
-          JSON.stringify({
-            type: "chat.regenerate.response",
-            role: "assistant" as Role.Assistant,
-            messageId,
-            content: token,
-            conversationId,
-          } satisfies WebSocketStreamRegenerteResponse),
-        );
-      });
+      result = await this.readStream(
+        stream,
+        this.abortController.signal,
+        (token) => {
+          ws.send(
+            JSON.stringify({
+              type: "chat.regenerate.response",
+              role: "assistant" as Role.Assistant,
+              messageId,
+              content: token,
+              conversationId,
+            } satisfies WebSocketStreamRegenerteResponse),
+          );
+        },
+      );
     } catch (error) {
       await Credit.release(this.userId, estimatedCredits, conversationId);
       console.error("Regenerate error:", error);
+      this.sendErrorMessage(ws, "Unable to process request. Please try again later.", conversationId)
       return;
     }
 
@@ -421,6 +428,7 @@ export class Conversation extends DurableObject<Env> {
    */
   private async readStream(
     stream: ReadableStream,
+    signal: AbortSignal,
     onToken: (token: string) => void,
   ): Promise<StreamResult> {
     const reader = stream.getReader();
@@ -430,42 +438,60 @@ export class Conversation extends DurableObject<Env> {
     let actualInputTokens = 0;
     let actualOutputTokens = 0;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      sseBuffer += decoder.decode(value, { stream: true });
-      const events = sseBuffer.split("\n\n");
-      sseBuffer = events.pop() ?? "";
+        sseBuffer += decoder.decode(value, { stream: true });
+        const events = sseBuffer.split("\n\n");
+        sseBuffer = events.pop() ?? "";
 
-      for (const event of events) {
-        if (event.includes("data: [DONE]")) continue;
+        for (const event of events) {
+          if (event.includes("data: [DONE]")) continue;
 
-        const dataLine = event.split("\n").find((l) => l.startsWith("data: "));
-        if (!dataLine) continue;
+          const dataLine = event
+            .split("\n")
+            .find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
 
-        const json = JSON.parse(dataLine.slice(6));
+          const json = JSON.parse(dataLine.slice(6));
 
-        if (json.usage) {
-          actualInputTokens =
-            json.usage.prompt_tokens ??
-            json.usage.input_tokens ??
-            actualInputTokens;
-          actualOutputTokens =
-            json.usage.completion_tokens ??
-            json.usage.output_tokens ??
-            actualOutputTokens;
-        }
+          if (json.usage) {
+            actualInputTokens =
+              json.usage.prompt_tokens ??
+              json.usage.input_tokens ??
+              actualInputTokens;
+            actualOutputTokens =
+              json.usage.completion_tokens ??
+              json.usage.output_tokens ??
+              actualOutputTokens;
+          }
 
-        const token = json.response ?? json.choices?.[0]?.delta?.content ?? "";
-        if (token) {
-          fullContent += token;
-          onToken(token);
+          const token =
+            json.response ?? json.choices?.[0]?.delta?.content ?? "";
+          if (token) {
+            fullContent += token;
+            onToken(token);
+          }
         }
       }
-    }
+    } catch (error) {
+      const wasAborted =
+        signal.aborted ||
+        (error instanceof Error && error.name === "AbortError");
 
-    return { fullContent, actualInputTokens, actualOutputTokens };
+      if (!wasAborted) {
+        throw error;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    return {
+      fullContent,
+      actualInputTokens,
+      actualOutputTokens,
+    };
   }
 
   /**

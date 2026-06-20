@@ -38,6 +38,7 @@ export function Topbar() {
   const { setMessages } = useChatStore();
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   console.log(id);
 
@@ -85,6 +86,8 @@ export function Topbar() {
     if (!shareLink) return;
     try {
       await navigator.clipboard.writeText(shareLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {}
   }
 
@@ -131,7 +134,7 @@ export function Topbar() {
                   <Spinner />
                 ) : (
                   <Button variant="outline" onClick={handleShareLinkCopy}>
-                    Copy
+                    {copied ? "Copied!" : "Copy"}
                   </Button>
                 )}
               </DialogFooter>
@@ -163,7 +166,7 @@ export function Topbar() {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
-                  className={cn("bg-red-500 text-white")}
+                  className={cn("bg-red-500 hover:bg-red-600 text-white")}
                 >
                   {loading ? <Spinner /> : "Delete"}
                 </AlertDialogAction>

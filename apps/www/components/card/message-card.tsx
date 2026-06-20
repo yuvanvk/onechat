@@ -5,7 +5,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
-import { Copy, RotateCcw, Download } from "lucide-react";
+import { Copy, RotateCcw, Download, Check } from "lucide-react";
 import { useChatStore } from "@/store/useChat";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -48,17 +48,19 @@ function MessageActions({
   onDownload,
   showRegenerate,
   onRegenerate,
+  copied,
 }: {
   onCopy?: () => void;
   onDownload?: () => Promise<void>;
   onRegenerate?: () => Promise<void>;
   showRegenerate?: boolean;
+  copied?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1">
       {onCopy && (
         <Button size="icon-xs" variant="ghost" onClick={onCopy}>
-          <Copy />
+          {copied ? <Check className="text-green-500" /> : <Copy />}
         </Button>
       )}
       {onDownload && (
@@ -86,7 +88,8 @@ export function MessageCard({
   model = "@cf/moonshotai/kimi-k2.6",
 }: Message) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const { conversationId, setMessageEmpty } = useChatStore();
+  const [copied, setCopied] = useState(false);
+  const { conversationId, setMessageEmpty, setIsStreaming } = useChatStore();
   const { send } = useSocket(conversationId as string);
 
   const isUser = role === "user";
@@ -95,6 +98,8 @@ export function MessageCard({
     if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
     }
@@ -110,8 +115,8 @@ export function MessageCard({
       conversationId,
       model,
     };
+    setIsStreaming(true);
     send(regenerateMessage);
-    console.log("processed");
   }
 
   async function handleDownload() {
@@ -228,13 +233,14 @@ export function MessageCard({
           whileHover={{ opacity: 1 }}
           className="flex justify-end"
         >
-          <MessageActions onCopy={handleCopy} />
+          <MessageActions onCopy={handleCopy} copied={copied} />
         </motion.div>
       )}
 
       {!isUser && messageType === "text" && content && (
         <MessageActions
           onCopy={handleCopy}
+          copied={copied}
           onRegenerate={handleRegenerate}
           showRegenerate
         />

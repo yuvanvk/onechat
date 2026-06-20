@@ -1,17 +1,15 @@
 import { Hono } from "hono";
-import ai from "@/routes/ai";
-import auth from "@/routes/auth";
-import share from "@/routes/share";
-import checkout from "@/routes/checkout";
-import webhook from "@/routes/webhook";
-import settings from "@/routes/settings";
-
-
-import r2 from "@/routes/r2";
-
 import { cors } from "hono/cors";
 import { authMiddleware, dbMiddleware } from "@/middleware";
 import { Bindings, Variables } from "@/types";
+
+import auth from "@/routes/auth";
+import ai from "@/routes/ai";
+import share from "@/routes/share";
+import r2 from "@/routes/r2";
+import checkout from "@/routes/checkout";
+import webhook from "@/routes/webhook";
+import settings from "@/routes/settings";
 
 const app = new Hono<{ Bindings: Bindings, Variables: Variables }>({
   strict: false,
@@ -27,8 +25,10 @@ app.use("*", cors({
 
 app.use("*", dbMiddleware);
 
+const api = app.basePath("/api/v1");
+const protectedApi = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
 const routes = [
-  { path: "/auth", router: auth },
   { path: "/ai", router: ai },
   { path: "/share", router: share },
   { path: "/r2", router: r2 },
@@ -37,15 +37,11 @@ const routes = [
   { path: "/settings", router: settings }
 ];
 
-const api = app.basePath("/api/v1");
-api.use("/ai/*", authMiddleware);
-api.use("/share/*", authMiddleware);
-api.use("/r2/*", authMiddleware);
-api.use("/checkout/*", authMiddleware);
-api.use("/webhook/*", authMiddleware);
-api.use("/settings/*", authMiddleware);
+protectedApi.use("*", authMiddleware);
+routes.forEach(({ path, router }) => protectedApi.route(path, router));
 
-routes.forEach(({ path, router }) => api.route(path, router));
+api.route("/auth", auth);
+api.route("/", protectedApi);
 
 export { Conversation } from "./durable-object/Conversation";
 export default {

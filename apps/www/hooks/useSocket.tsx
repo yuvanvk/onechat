@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export function useSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
-  const { updateMessage, setRegeneratedMessage, setImageKey } = useChatStore();
+  const { updateMessage, setRegeneratedMessage, setImageKey, setIsStreaming } = useChatStore();
   const { setTitle } = useConversationStore();
 
   useEffect(() => {
@@ -35,16 +35,22 @@ export function useSocket(conversationId: string) {
           setTitle(parsed.title, parsed.conversationId);
           break;
         case "chat.stream.done":
+          setIsStreaming(false)
           updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
           updateMessage({ id: "new-ai-message", setId: parsed.aiMessageId });
           break;
         case "chat.stream.error":
           toast.error(parsed.message);
+          setIsStreaming(false)
           break;
         case "chat.generated.image":
+          setIsStreaming(false)
           setImageKey(parsed.imageKey);
           updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
           updateMessage({ id: "new-ai-message", setId: parsed.id });
+          break;
+        case "chat.regenerate.done":
+          setIsStreaming(false);
           break;
       }
     };

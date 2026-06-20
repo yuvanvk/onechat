@@ -9,6 +9,7 @@ interface ChatStore {
   conversationId: string;
   messages: Message[];
   pendingMessage: WebSocketCreateStreamMessage | WebSocketGenerateImage | null;
+  isStreaming: boolean;
   setMessages: (messages: Message[]) => void;
   setPendingMessage: (
     message: WebSocketCreateStreamMessage | WebSocketGenerateImage | null,
@@ -23,11 +24,13 @@ interface ChatStore {
   setRegeneratedMessage: (messageId: string, token: string) => void;
   setMessageEmpty: (messageId: string) => void;
   setImageKey: (imageKey: string) => void;
+  setIsStreaming: (isStreaming: boolean) => void;
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   conversationId: "",
   messages: [],
+  isStreaming: false,
   setMessages: (messages) => set({ messages }),
   pendingMessage: null,
   setPendingMessage: (message) => set({ pendingMessage: message }),
@@ -68,4 +71,5 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         message.id === "new-ai-message" ? { ...message, imageKey } : message,
       ),
     }),
+  setIsStreaming: (isStreaming) => set({ isStreaming }),
 }));
