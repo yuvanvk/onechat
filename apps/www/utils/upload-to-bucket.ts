@@ -1,6 +1,8 @@
+import { BACKEND_URL } from "@/lib/config";
+
 export async function uploadToBucket(file: File) {
   try {
-    const response = await fetch(`http://localhost:8787/api/v1/r2`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/r2`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({

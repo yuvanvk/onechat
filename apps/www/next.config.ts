@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8787";
+const url = new URL(backendUrl);
+
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [{
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8787',
+        protocol: url.protocol.replace(":", "") as "http" | "https",
+        hostname: url.hostname,
+        port: url.port,
         pathname: '/**',
       },]
   }

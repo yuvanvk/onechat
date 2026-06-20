@@ -27,6 +27,7 @@ import {
   CircleDashed,
 } from "lucide-react";
 import { useConversationStore } from "@/store/useConversation";
+import { BACKEND_URL } from "@/lib/config";
 
 export const CommandBox = () => {
   const router = useRouter();
@@ -62,7 +63,7 @@ export const CommandBox = () => {
 
   const createConversation = async () => {
     const response = await window.fetch(
-      "http://localhost:8787/api/v1/ai/create",
+      `${BACKEND_URL}/api/v1/ai/create`,
       {
         method: "POST",
         credentials: "include",
@@ -118,7 +119,7 @@ export const CommandBox = () => {
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      className="min-w-md w-full"
+      className="min-w-0 w-[95vw] max-w-[500px] md:min-w-md"
     >
       <Command>
         <CommandInput placeholder="Type a command or search..." />

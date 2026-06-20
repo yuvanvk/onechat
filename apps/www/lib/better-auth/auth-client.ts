@@ -2,10 +2,11 @@ import {
   createAuthClient,
   customSessionClient,
 } from "@workspace/better-auth/client";
-import { AuthInstance } from "@workspace/better-auth/server";
+import type { AuthInstance } from "@workspace/better-auth/server";
+import { BACKEND_URL } from "@/lib/config";
 
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:8787",
+  baseURL: BACKEND_URL,
   basePath: "/api/v1/auth",
   plugins: [
     customSessionClient<AuthInstance>(),

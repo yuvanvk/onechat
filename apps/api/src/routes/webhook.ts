@@ -14,6 +14,7 @@ router.post("/dodo", (c) => {
     onSubscriptionActive: async (event) => {
       const customereEmail = event.data.customer.email;
       const customerId = event.data.customer.customer_id;
+      const nextBillingDate = event.data.next_billing_date;
 
       const [update] = await db
         .update(user)
@@ -22,6 +23,7 @@ router.post("/dodo", (c) => {
           credit_balance: 200_000,
           subscriptionId: event.data.subscription_id,
           customerId,
+          nextBillingDate,
           cancelAtNextBillingDate: false,
           updatedAt: new Date(),
         })

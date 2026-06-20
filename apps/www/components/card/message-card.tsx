@@ -10,6 +10,7 @@ import { useChatStore } from "@/store/useChat";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Message, WebSocketRegenerateStreamMessage } from "@workspace/types";
+import { BACKEND_URL } from "@/lib/config";
 
 const PROSE_CLASSES = `
   prose prose-neutral dark:prose-invert max-w-none
@@ -27,7 +28,7 @@ const PROSE_CLASSES = `
 `.trim();
 
 const getImageUrl = (key: string) =>
-  `http://localhost:8787/api/v1/r2/images/${key}`;
+  `${BACKEND_URL}/api/v1/r2/images/${key}`;
 
 function ThinkingIndicator({ loaderText = "Thinking..."}: { loaderText?: string }) {
   return (

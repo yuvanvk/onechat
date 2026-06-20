@@ -50,7 +50,7 @@ export const Chat = () => {
         </div>
       )}
       {id && (
-        <div className="min-h-242.5 max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-14 pb-21 h-full flex flex-col overflow-y-auto">
+        <div className="min-h-[75vh] md:min-h-242.5 max-h-[75vh] md:max-h-242.5 max-w-3xl mx-auto w-full px-4 pt-14 pb-21 h-full flex flex-col overflow-y-auto">
           {isLoading ? (
             <ChatSkeleton />
           ) : (

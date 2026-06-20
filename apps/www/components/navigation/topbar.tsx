@@ -30,24 +30,23 @@ import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/store/useChat";
 import { SelectModelPopover } from "../chat/select-model-popover";
 import { SidebarTrigger, useSidebar } from "../ui/sidebar";
+import { BACKEND_URL } from "@/lib/config";
 
 export function Topbar() {
   const { id } = useParams();
   const router = useRouter();
   const { open, isMobile } = useSidebar();
-  const { setMessages } = useChatStore();
+  const { setMessages, setIsStreaming } = useChatStore();
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
   const [copied, setCopied] = useState(false);
-
-  console.log(id);
 
   async function handleDelete() {
     if (!id) return;
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8787/api/v1/ai/chat/delete/${id}`,
+        `${BACKEND_URL}/api/v1/ai/chat/delete/${id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -56,6 +55,7 @@ export function Topbar() {
       await response.json();
       router.push("/");
       setMessages([]);
+      setIsStreaming(false)
     } catch (error) {
       console.log("ERROR in TOPBAR", error);
     } finally {
@@ -68,7 +68,7 @@ export function Topbar() {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8787/api/v1/ai/chat/share/${id}`,
+        `${BACKEND_URL}/api/v1/ai/chat/share/${id}`,
         {
           method: "POST",
           credentials: "include",

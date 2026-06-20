@@ -8,6 +8,7 @@ import {
 } from "@workspace/types";
 import { useConversationStore } from "@/store/useConversation";
 import { toast } from "sonner";
+import { WS_URL } from "@/lib/config";
 
 export function useSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
@@ -18,7 +19,7 @@ export function useSocket(conversationId: string) {
     if (!conversationId) return;
 
     const socket = new WebSocket(
-      `ws://localhost:8787/api/v1/ai/chat?conversationId=${conversationId}`,
+      `${WS_URL}/api/v1/ai/chat?conversationId=${conversationId}`,
     );
     ws.current = socket;
 

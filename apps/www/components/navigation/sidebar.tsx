@@ -46,6 +46,7 @@ import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { System } from "@/components/icons";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { BACKEND_URL } from "@/lib/config";
 
 export const AppSidebar = () => {
   const router = useRouter();
@@ -103,7 +104,7 @@ export const AppSidebar = () => {
           className="bg-muted/90 hover:bg-muted text-foreground"
           onClick={async () => {
             const response = await window.fetch(
-              "http://localhost:8787/api/v1/ai/create",
+              `${BACKEND_URL}/api/v1/ai/create`,
               {
                 method: "POST",
                 credentials: "include",

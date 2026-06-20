@@ -65,7 +65,7 @@ export const VerifyEmail = () => {
             <Button
               size={"sm"}
               onClick={() => router.push("/login")}
-              className={cn("bg-secondary text-secondary-foreground border-border")}
+              className={cn("bg-secondary text-secondary-foreground border-border hover:bg-secondary/90")}
             >
               Login Here
             </Button>

@@ -26,7 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/better-auth/auth-client";
-import { ModelCapability } from "@/lib/supported-models/models";
+import type { ModelCapability } from "@/lib/supported-models/models";
 
 const CAPABILITY_FILTERS: { key: ModelCapability; icon: any; label: string }[] = [
   { key: "text", icon: IoChatbubbleOutline, label: "Text" },
@@ -108,11 +108,11 @@ export const SelectModelPopover = () => {
   }, []);
 
   return (
-    <div className="relative w-fit">
+    <div className="relative">
       <div
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1 max-w-48",
+          "flex items-center gap-1.5 hover:bg-accent rounded-lg px-2 py-1 max-w-[160px] sm:max-w-48",
           "cursor-pointer transition-all duration-150 select-none",
           open && "bg-accent",
         )}
@@ -137,7 +137,7 @@ export const SelectModelPopover = () => {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={cn("text-muted-foreground", open && "text-foreground")}
+          className={cn("text-muted-foreground shrink-0", open && "text-foreground")}
         >
           <path d="m6 9 6 6 6-6" />
         </motion.svg>
@@ -152,8 +152,10 @@ export const SelectModelPopover = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ ease: "easeInOut", duration: 0.1 }}
             className={cn(
-              "w-112.5 min-h-125 max-h-125 rounded-xl bg-popover text-popover-foreground border border-border overflow-hidden",
-              "absolute -bottom-130 left-1 flex flex-col gap-2",
+              "w-[calc(100vw-16px)] max-w-[450px] md:w-112.5 min-h-[50vh] max-h-[80vh] md:min-h-125 md:max-h-125",
+              "rounded-xl bg-popover text-popover-foreground border border-border overflow-hidden",
+              "fixed md:absolute top-16 md:top-auto md:-bottom-130 left-1/2 md:left-1 -translate-x-1/2 md:translate-x-0",
+              "flex flex-col gap-2 z-50",
             )}
           >
             {/* Top Search Bar and filter */}
@@ -220,8 +222,8 @@ export const SelectModelPopover = () => {
               {!hasSearch && (
                 <div
                   className={cn(
-                    "absolute inset-y-0 bg-background-muted w-15 rounded-tr-xl border-r border-t border-neutral-300 dark:border-neutral-800",
-                    "flex flex-col gap-7 items-center py-4 overflow-y-scroll scrollbar-hidden",
+                    "absolute inset-y-0 bg-background-muted w-12 md:w-15 rounded-tr-xl border-r border-t border-neutral-300 dark:border-neutral-800",
+                    "flex flex-col gap-5 md:gap-7 items-center py-3 md:py-4 overflow-y-scroll scrollbar-hidden",
                   )}
                 >
                   {supportedModels.map((model, idx) => {
@@ -261,8 +263,8 @@ export const SelectModelPopover = () => {
               <div
                 className={cn(
                   "absolute inset-y-0 right-0",
-                  hasSearch ? "left-0" : "left-15",
-                  "flex flex-col gap-5 py-5 px-4 overflow-y-scroll scrollbar-hidden",
+                  hasSearch ? "left-0" : "left-12 md:left-15",
+                  "flex flex-col gap-4 md:gap-5 py-4 md:py-5 px-3 md:px-4 overflow-y-scroll scrollbar-hidden",
                 )}
               >
                 {displayModels.length === 0 && (

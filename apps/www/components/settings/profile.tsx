@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { BACKEND_URL } from "@/lib/config";
 
 export const Profile = () => {
   const router = useRouter();
@@ -28,7 +29,7 @@ export const Profile = () => {
       return;
     }
     const response = await fetch(
-      "http://localhost:8787/api/v1/settings/update/user",
+      `${BACKEND_URL}/api/v1/settings/update/user`,
       {
         method: "PATCH",
         credentials: "include",
@@ -46,7 +47,7 @@ export const Profile = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full py-12 flex flex-col">
+    <div className="max-w-3xl mx-auto w-full px-4 py-12 flex flex-col">
       <div className="flex items-center gap-2">
         <Button
           size={"icon-lg"}

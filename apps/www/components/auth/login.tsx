@@ -139,7 +139,7 @@ export const Login = () => {
           <Button
             onClick={handleLogin}
             className={cn(
-              "bg-secondary text-secondary-foreground border-border mt-2",
+              "bg-secondary text-secondary-foreground border-border mt-2 hover:bg-secondary/90",
             )}
           >
             <FingerprintPattern />
@@ -153,7 +153,7 @@ export const Login = () => {
           </div>
 
           <Button
-            className={cn("bg-secondary text-secondary-foreground border-border")}
+            className={cn("bg-secondary text-secondary-foreground border-border hover:bg-secondary/90")}
           >
             <FcGoogle />
             Google

@@ -85,7 +85,6 @@ export class Conversation extends DurableObject<Env> {
     message: WebSocketCreateStreamMessage,
   ) {
     this.abortController = new AbortController();
-    console.log("inside stream -> ", this.userId);
     
     const { conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];

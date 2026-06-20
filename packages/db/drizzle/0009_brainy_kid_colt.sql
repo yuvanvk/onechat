@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `next_billing_date` integer;

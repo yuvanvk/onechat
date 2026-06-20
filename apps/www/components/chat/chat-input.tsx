@@ -20,6 +20,7 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useModel } from "@/store/useModel";
 import { isModelImageGen } from "@/lib/helper/is-model-image-gen";
+import { BACKEND_URL } from "@/lib/config";
 
 export const ChatInput = () => {
   const { id } = useParams();
@@ -202,7 +203,7 @@ export const ChatInput = () => {
     let activeId = id as string;
 
     if (!activeId) {
-      const response = await fetch("http://localhost:8787/api/v1/ai/create", {
+      const response = await fetch(`${BACKEND_URL}/api/v1/ai/create`, {
         method: "POST",
         credentials: "include",
       });
@@ -332,7 +333,7 @@ export const ChatInput = () => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col rounded-xl border border-neutral-300 dark:border-accent bg-white dark:bg-[#121212] max-w-3xl w-full mx-auto p-1 gap-2 absolute",
+        "flex flex-col rounded-xl border border-neutral-300 dark:border-accent bg-white dark:bg-[#121212] max-w-[calc(100vw-16px)] md:max-w-3xl w-full mx-auto p-1 gap-2 absolute",
         "bottom-2 left-1/2 -translate-x-1/2",
         isDraggingOver && "drag-active",
       )}

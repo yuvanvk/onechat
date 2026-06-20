@@ -12,6 +12,7 @@ export const user = sqliteTable("user", {
   subscriptionId: t.text("subscription_id").unique(),
   customerId: t.text("customer_id").unique(),
   cancelAtNextBillingDate: t.integer("cancel_at_next_billing_date", { mode: "boolean" }).default(false),
+  nextBillingDate: t.integer("next_billing_date", { mode: "timestamp_ms"}),
   image: t.text("image"),
   createdAt: t.integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: t.integer("updated_at", { mode: "timestamp_ms" }).notNull(),

@@ -2,6 +2,7 @@
 
 import { useChatStore } from "@/store/useChat";
 import { useEffect, useState } from "react";
+import { BACKEND_URL } from "@/lib/config";
 
 export function useMessage(id: string) {
   const { setMessages, pendingMessage } = useChatStore();
@@ -18,7 +19,7 @@ export function useMessage(id: string) {
       setError(null);
       try {
         const response = await fetch(
-          `http://localhost:8787/api/v1/ai/conversations/${id}`,
+          `${BACKEND_URL}/api/v1/ai/conversations/${id}`,
           { signal: abortController.signal, credentials: "include" },
         );
         const { data } = await response.json();

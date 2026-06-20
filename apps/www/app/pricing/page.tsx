@@ -3,6 +3,7 @@ import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
+import { BACKEND_URL } from "@/lib/config";
 
 type PlanFeature = {
   label: string;
@@ -69,7 +70,7 @@ export default function Pricing() {
       return
     }
     const response = await fetch(
-      "http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customerId=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs",
+      `${BACKEND_URL}/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3&customerId=HfbevZyJ8HESjJOlcA6KJFGyM3lZVrjs`,
       { credentials: "include" },
     );
     const json = await response.json();
@@ -78,11 +79,11 @@ export default function Pricing() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full py-16 flex flex-col items-center tracking-tight relative">
-      <Button variant={"outline"} onClick={() => router.back()} className="absolute left-0">
+    <div className="max-w-3xl mx-auto w-full px-4 py-16 flex flex-col items-center tracking-tight relative">
+      <Button variant={"outline"} onClick={() => router.back()} className="absolute left-4 md:left-0 top-4 md:top-auto">
         <ArrowLeft />
       </Button>
-      <h1 className="font-medium text-4xl tracking-tight text-center">
+      <h1 className="font-medium text-3xl md:text-4xl tracking-tight text-center">
         Plans and Pricing
       </h1>
 

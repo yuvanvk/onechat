@@ -5,6 +5,7 @@ import {
 } from "@/lib/supported-models/models";
 import { toast } from "sonner";
 import { create } from "zustand";
+import { BACKEND_URL } from "@/lib/config";
 
 interface ModelStore {
   modelId: string;
@@ -23,7 +24,7 @@ export const useModel = create<ModelStore>((set, get) => ({
   setModel: (modelId) => set({ modelId }),
   setModelName: (name) => set({ modelName: name }),
   addToFavourites: async (model) => {
-    const response = await fetch("http://localhost:8787/api/v1/ai/favourite", {
+    const response = await fetch(`${BACKEND_URL}/api/v1/ai/favourite`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
@@ -49,7 +50,7 @@ export const useModel = create<ModelStore>((set, get) => ({
     });
   },
   removeFromFavourites: async (id) => {
-    const response = await fetch(`http://localhost:8787/api/v1/ai/favourite/delete/${encodeURIComponent(id)}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/ai/favourite/delete/${encodeURIComponent(id)}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -68,7 +69,7 @@ export const useModel = create<ModelStore>((set, get) => ({
       )})
   },
   fetch: async () => {
-    const response = await fetch("http://localhost:8787/api/v1/ai/favourite", { credentials: "include" });
+    const response = await fetch(`${BACKEND_URL}/api/v1/ai/favourite`, { credentials: "include" });
     const json = await response.json();
 
     if(!response.ok) {

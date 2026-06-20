@@ -10,8 +10,9 @@ import { motion } from "motion/react";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { useEffect } from "react";
 import { toast } from "sonner";
-
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { BACKEND_URL } from "@/lib/config";
 
 const CREDIT_VALUE = 0.0001;
 
@@ -59,7 +60,7 @@ export const Billing = () => {
 
   async function handleCheckout() {
     const response = await fetch(
-      `http://localhost:8787/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3`,
+      `${BACKEND_URL}/api/v1/checkout?productId=pdt_0NhMGl6F8wOpuZwSc8tP3`,
       { credentials: "include" },
     );
     const json = await response.json();
@@ -67,21 +68,24 @@ export const Billing = () => {
   }
 
   async function handleCancel() {
-    const response = await fetch("http://localhost:8787/api/v1/dodo/subscription/cancel", {
-      method: "POST",
-      credentials: "include"
-    })
+    const response = await fetch(
+      `${BACKEND_URL}/api/v1/dodo/subscription/cancel`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
 
-    if(!response.ok) {
-      toast.error("Subscription cancellation failed. Please try again later")
-      return
+    if (!response.ok) {
+      toast.error("Subscription cancellation failed. Please try again later");
+      return;
     }
     const result = await response.json();
-    toast.success(result.message)
+    toast.success(result.message);
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full py-12 flex flex-col tracking-tight text-sm">
+    <div className="max-w-3xl mx-auto w-full px-4 py-12 flex flex-col tracking-tight text-sm">
       <div className="flex items-center gap-2">
         <Button
           size={"icon-lg"}
@@ -97,7 +101,7 @@ export const Billing = () => {
       <div className="w-full flex flex-col gap-5 mt-10">
         <h2 className="text-muted-foreground font-medium pl-1">Current Plan</h2>
 
-        <div className="w-full border border-accent dark:bg-[#121212] rounded-lg flex items-center justify-between p-3">
+        <div className="w-full border border-accent dark:bg-[#121212] rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
           <div className="flex flex-col gap-1">
             <div>
               <span className="font-medium">
@@ -111,7 +115,7 @@ export const Billing = () => {
               Includes {plan === "free" ? "$2" : "$20"} credits every month.
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               size={"sm"}
               variant={"outline"}
@@ -120,15 +124,43 @@ export const Billing = () => {
               View Plans
               <SquareArrowOutUpRight />
             </Button>
-            <Button
-              size={"sm"}
-              onClick={async () => {
-                if (plan === "free") await handleCheckout();
-                if (plan === "pro") await handleCancel();
-              }}
-            >
-              {plan === "free" ? "Upgrade" : "Cancel Plan"}
-            </Button>
+            {plan === "free" ? (
+              <Button
+                size={"sm"}
+                onClick={async () => {
+                  if (plan === "free") await handleCheckout();
+                }}
+              >
+                Upgrade
+              </Button>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger>
+                  <Button
+                    size={"sm"}
+                  >
+                    Cancel Plan
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogTitle>
+                    Are you sure to cancel subscription?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action schedules to cancel the current plan by next billing date.
+                  </AlertDialogDescription>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancel}
+                      className={cn("bg-red-500 hover:bg-red-600 text-white")}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </div>
@@ -136,7 +168,7 @@ export const Billing = () => {
       {/* ── Credit Balance ── */}
       <div className="w-full flex flex-col gap-5 mt-10">
         <div className="w-full border border-accent dark:bg-[#121212] rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between p-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3">
             <div className="flex flex-col gap-1">
               <span className="font-medium">Credit Balance</span>
               <span className="text-muted-foreground">
@@ -160,12 +192,12 @@ export const Billing = () => {
 
           <div className="h-px bg-accent" />
 
-          <div className="flex gap-8 px-4 py-3 items-center">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 px-4 py-3 items-start md:items-center">
             {/* Card visual */}
             <motion.div
               whileHover={{ scale: 1.03 }}
               transition={{ type: "spring", damping: 10, duration: 0.2 }}
-              className="w-55 h-35 shrink-0 bg-linear-to-br from-bg-neutral-400 to-bg-neutral-600 dark:from-[#1c1c1c] dark:to-[#0a0a0a] border border-accent p-4 flex flex-col justify-between rounded-xl"
+              className="w-full md:w-55 h-35 shrink-0 bg-linear-to-br from-bg-neutral-400 to-bg-neutral-600 dark:from-[#1c1c1c] dark:to-[#0a0a0a] border border-accent p-4 flex flex-col justify-between rounded-xl"
             >
               <div className="self-end text-muted-foreground">
                 <CreditCard className="size-6" strokeWidth={1.5} />
@@ -181,7 +213,7 @@ export const Billing = () => {
             </motion.div>
 
             {/* Breakdown rows */}
-            <div className="flex-1 flex flex-col rounded-md overflow-hidden">
+            <div className="w-full flex-1 flex flex-col rounded-md overflow-hidden">
               <div className="flex items-center justify-between px-2 py-2.5">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                   Gifted Credits
@@ -214,66 +246,6 @@ export const Billing = () => {
                 <span>{formatCurrency(creditBalanceUSD)}</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Expiration Schedule ── */}
-      <div className="w-full flex flex-col gap-5 mt-10">
-        <div className="w-full border border-accent dark:bg-[#121212] rounded-lg overflow-hidden">
-          <div className="p-3">
-            <span className="font-medium">Credit Expiration Schedule</span>
-          </div>
-
-          <div className="grid grid-cols-3 px-3 pb-2 text-muted-foreground">
-            <span>Type</span>
-            <span>Credit Balance</span>
-            <span className="text-right">Expiration</span>
-          </div>
-
-          {expirationSchedule.map((row, i) => (
-            <div key={i} className="grid grid-cols-3 px-3 py-2.5">
-              <span className="font-medium">{row.type}</span>
-              <span className="text-muted-foreground">
-                {formatCurrency(row.used)} / {formatCurrency(row.total)}
-              </span>
-              <span className="text-muted-foreground text-right">
-                {row.expiration}
-              </span>
-            </div>
-          ))}
-
-          <div className="h-px bg-accent mt-2" />
-
-          <div className="p-3">
-            <span className="font-medium">
-              Used and Expired Credits Over Past 3 Months
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 px-5 text-[13px] pb-2 text-muted-foreground">
-            <span>Type</span>
-            <span>Credit Balance</span>
-            <span className="text-right">Expiration</span>
-          </div>
-
-          <div className="px-3 pb-3">
-            {usedAndExpired.map((row, i) => (
-              <div
-                key={i}
-                className={`grid grid-cols-3 p-2 rounded-lg ${
-                  i % 2 === 1 ? "bg-neutral-200/50 dark:bg-black" : ""
-                }`}
-              >
-                <span className="font-medium">{row.type}</span>
-                <span className="text-muted-foreground">
-                  {formatCurrency(row.used)} / {formatCurrency(row.total)}
-                </span>
-                <span className="text-muted-foreground text-right">
-                  {row.expiration}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       </div>

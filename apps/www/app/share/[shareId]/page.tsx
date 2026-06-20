@@ -5,6 +5,7 @@ import { useChatStore } from "@/store/useChat";
 import { useParams, useRouter } from "next/navigation";
 import { MessageCard } from "@/components/card/message-card";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
+import { BACKEND_URL } from "@/lib/config";
 
 export default function SharedConversationPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function SharedConversationPage() {
     try {
       const fetchShareConversation = async () => {
         const response = await fetch(
-          `http://localhost:8787/api/v1/share/${shareId}`,
+          `${BACKEND_URL}/api/v1/share/${shareId}`,
           { credentials: "include" },
         );
         const { data } = await response.json();

@@ -15,7 +15,6 @@ interface BannerProps {
 export const Banner = ({ bannerText, className }: BannerProps) => {
   const [show, setShow] = useState(true);
   const { data } = authClient.useSession();
-  console.log(data?.user.creditBalance);
   
 
   const lowCredits = data?.user.creditBalance! < (data?.user.plan === "free" ? 20_000 : 200_000) * 0.20;
