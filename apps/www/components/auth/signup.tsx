@@ -86,7 +86,7 @@ export const SignUp = () => {
     >
       <div
         onClick={() => router.push("/login")}
-        className="absolute top-5 right-5"
+        className="absolute top-5 right-5 z-10"
       >
         <Button size={"sm"} variant={"secondary"}>
           Login

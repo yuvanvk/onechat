@@ -51,7 +51,7 @@ import { BACKEND_URL } from "@/lib/config";
 export const AppSidebar = () => {
   const router = useRouter();
   const { conversations } = useConversationStore();
-  const { setConversationId } = useChatStore();
+  const { setConversationId, setMessages } = useChatStore();
   const { setOpen } = useCommandStore();
   const { theme, setTheme } = useTheme();
   const pathName = usePathname();
@@ -70,7 +70,10 @@ export const AppSidebar = () => {
     {
       name: "Home",
       icon: Store,
-      onClick: () => router.push("/"),
+      onClick: () => {
+        setMessages([])
+        router.push("/")
+      },
       route: "/",
     },
   ];
