@@ -94,6 +94,14 @@ export const auth = (env: Bindings) => {
         options,
       ),
     ],
+    advanced: {
+      defaultCookieAttributes: {
+        sameSite: env.ENVIRONMENT === "production" ? "None" : "Lax",
+        secure: env.ENVIRONMENT === "production",
+        partitioned: env.ENVIRONMENT === "production",
+        httpOnly: true,
+      },
+    }
   });
 };
 

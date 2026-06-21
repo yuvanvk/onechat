@@ -1,54 +1,68 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "api",
-	"main": "src/index.ts",
-	"compatibility_date": "2026-04-30",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"d1_databases": [
-		{
-			"binding": "D1_DATABASE",
-			"database_name": "onechat-d1",
-			"database_id": "97e93c06-5598-46a0-bef0-5b4c2f1819e9",
-			"migrations_dir": "../../packages/db/drizzle",
-			"remote": true
-		}
-	],
-	"ai": {
-		"binding": "AI",
-		"remote": true
-	},
-	"r2_buckets": [
-		{
-			"binding": "IMAGES_BUCKET",
-			"bucket_name": "images",
-			"remote": true
-		},
-		{
-			"binding": "PDFS_BUCKET",
-			"bucket_name": "pdfs",
-			"remote": true
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "CONVERSATION",
-				"class_name": "Conversation"
-			}
-		]
-	},
-	"migrations": [
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "D1_DATABASE",
+      "database_name": "onechat-d1",
+      "database_id": "97e93c06-5598-46a0-bef0-5b4c2f1819e9",
+      "migrations_dir": "../../packages/db/drizzle",
+      "remote": true,
+    },
+  ],
+  "ai": {
+    "binding": "AI",
+    "remote": true,
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "images",
+      "remote": true,
+    },
+    {
+      "binding": "PDFS_BUCKET",
+      "bucket_name": "pdfs",
+      "remote": true,
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "CONVERSATION",
+        "class_name": "Conversation",
+      },
+    ],
+  },
+  "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["Conversation"]
+      "new_sqlite_classes": ["Conversation"],
     },
   ],
   "triggers": {
-    "crons": ["0 0 1 * *"]
+    "crons": ["0 0 1 * *"],
   },
   "vars": {
     "ENVIRONMENT": "production",
+    "FRONTEND_URL": "https://onechat.yuvan.me",
+  },
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
   }
 }
