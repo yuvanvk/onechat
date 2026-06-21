@@ -35,6 +35,7 @@ export const ChatInput = () => {
     setPendingMessage,
     setIsStreaming,
     isStreaming,
+    pendingInput, setPendingInput
   } = useChatStore();
 
   const { supportedModels } = useModel();
@@ -173,6 +174,13 @@ export const ChatInput = () => {
       }
     }
   }, [pendingMessage, id, send]);
+
+  useEffect(() => {
+  if (pendingInput) {
+    setInput(pendingInput);
+    setPendingInput("");
+  }
+}, [pendingInput]);
 
   function checkModelCapability(modelId: string): boolean {
     const model = supportedModels

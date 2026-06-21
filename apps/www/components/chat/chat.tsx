@@ -12,6 +12,7 @@ import { useConversationStore } from "@/store/useConversation";
 import { ChatSkeleton } from "@/components/skeleton/messages-skeleton";
 import { Banner } from "../card/banner";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { WelcomeScreen } from "./welcome-screen";
 
 export const Chat = () => {
   const { id } = useParams();
@@ -31,22 +32,25 @@ export const Chat = () => {
 
   useEffect(() => {
     if (!data?.session) {
-      router.push("/signup")
+      router.push("/signup");
     }
-  }, [data?.session])
+  }, [data?.session]);
 
   if (error) {
     toast.error(error);
   }
-
 
   return (
     <div className="flex flex-col bg-background h-full w-full">
       <Topbar />
       <Banner bannerText="Credits too low. Please topup credits in order to continue chat." />
       {!id && (
-        <div className="flex items-center justify-center h-screen">
-          {/* hi */}
+        <div className="relative flex-1">
+          <WelcomeScreen
+            onSuggestionClick={(text) => {
+              // set the chat input value — wire to your ChatInput state
+            }}
+          />
         </div>
       )}
       {id && (

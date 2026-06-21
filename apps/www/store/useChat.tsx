@@ -8,6 +8,8 @@ import {
 interface ChatStore {
   conversationId: string;
   messages: Message[];
+  pendingInput: string;
+  setPendingInput: (text: string) => void;
   pendingMessage: WebSocketCreateStreamMessage | WebSocketGenerateImage | null;
   isStreaming: boolean;
   setMessages: (messages: Message[]) => void;
@@ -31,6 +33,8 @@ interface ChatStore {
 export const useChatStore = create<ChatStore>((set, get) => ({
   conversationId: "",
   messages: [],
+  pendingInput: "",
+  setPendingInput: (text) => set({ pendingInput: text }),
   isStreaming: false,
   setMessages: (messages) => set({ messages }),
   pendingMessage: null,
