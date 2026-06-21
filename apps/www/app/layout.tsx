@@ -2,6 +2,7 @@ import "./globals.css"
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Provider } from "@/components/providers/provider";
+import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
@@ -37,8 +38,9 @@ export default function RootLayout({
     >
       <body className="selection:bg-primary selection:text-primary-foreground font-sans">
         <Provider>{children}</Provider>
+        <Analytics />
         <Toaster position="top-right" offset={5} toastOptions={{
-          className: "border dark:bg-[#121212]! border-neutral-800! shadow-sm! rounded-xl!"
+          className: "border dark:bg-[#121212]! border-neutral-200 dark:border-neutral-800! shadow-sm! rounded-xl!"
         }}/>
       </body>
     </html>
