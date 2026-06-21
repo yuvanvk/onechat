@@ -65,7 +65,7 @@ export const SignUp = () => {
         email,
         password,
         name: username,
-        callbackURL: "http://localhost:3000/login",
+        callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`,
       });
       toast.success("Sent a verification email to your registered email.")
     } catch (error) {

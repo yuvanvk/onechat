@@ -64,7 +64,7 @@ export const Login = () => {
       await authClient.signIn.email({
         email,
         password,
-        callbackURL: "http://localhost:3000",
+        callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}`,
       });
     } catch (error) {
       toast.error("Something went wrong.");

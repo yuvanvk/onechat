@@ -12,7 +12,8 @@ interface Bindings {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   RESEND_API_KEY: string;
-  ENVIRONMENT: string
+  ENVIRONMENT: string;
+  FRONTEND_URL: string;
 }
 
 const getOptions = (env: Bindings) => {
@@ -22,7 +23,7 @@ const getOptions = (env: Bindings) => {
     database: drizzleAdapter(db, { provider: "sqlite" }),
     appName: "OneChat",
     basePath: "/api/v1/auth",
-    trustedOrigins: ["http://localhost:3000"],
+    trustedOrigins: ["http://localhost:3000", "https://onechat.yuvan.me"],
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -30,7 +31,7 @@ const getOptions = (env: Bindings) => {
     emailVerification: {
       sendOnSignUp: true,
       sendVerificationEmail: async ({ user, token }, _request) => {
-        const verifyUrl = `http://localhost:3000/verify-email?token=${encodeURIComponent(token)}`;
+        const verifyUrl = `${env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
         await sendEmail({
           to: user.email,
           subject: "Verify your email address",

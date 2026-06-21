@@ -50,5 +50,6 @@
   },
   "vars": {
     "ENVIRONMENT": "production",
+	"FRONTEND_URL": "https://onechat.yuvan.me"
   }
 }

@@ -19,7 +19,8 @@ export type Bindings = {
     DODO_PAYMENTS_API_KEY: string,
     DODO_PAYMENTS_RETURN_URL: string,
     DODO_PAYMENTS_WEBHOOK_KEY: string,
-    ENVIRONMENT: string
+    ENVIRONMENT: string,
+    FRONTEND_URL: string,
 }
 
 type AuthInstance = ReturnType<typeof auth>;
