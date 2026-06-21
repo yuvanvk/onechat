@@ -67,6 +67,7 @@ export const SignUp = () => {
         name: username,
         callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`,
       });
+      router.push("/login")
       toast.success("Sent a verification email to your registered email.")
     } catch (error) {
       toast.error("Something went wrong.")
@@ -75,7 +76,6 @@ export const SignUp = () => {
     }
     
   }
-
   return (
     <div
       className={cn(

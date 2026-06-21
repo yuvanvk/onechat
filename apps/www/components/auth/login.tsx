@@ -66,6 +66,7 @@ export const Login = () => {
         password,
         callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}`,
       });
+      router.push("/")
       toast.success("Logged in successfully.")
     } catch (error) {
       console.log(error)
