@@ -66,7 +66,9 @@ export const Login = () => {
         password,
         callbackURL: `${process.env.NEXT_PUBLIC_FRONTEND_URL}`,
       });
+      toast.success("Logged in successfully.")
     } catch (error) {
+      console.log(error)
       toast.error("Something went wrong.");
     } finally {
       setLoading(false);
