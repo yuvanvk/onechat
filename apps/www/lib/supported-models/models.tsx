@@ -281,14 +281,6 @@ export const SELECT_MODELS: ModelProvider[] = [
         free: false,
         capabilities: ["text", "multilingual"],
       },
-      {
-        id: "@cf/meta/llama-3.2-11b-vision-instruct",
-        displayName: "Llama 3.2 11B Vision",
-        description:
-          "Llama 3.2 vision model optimized for visual recognition, image reasoning, and captioning.",
-        free: true,
-        capabilities: ["text", "vision"],
-      },
     ],
   },
   {

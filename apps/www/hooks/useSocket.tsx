@@ -18,9 +18,11 @@ export function useSocket(conversationId: string) {
   useEffect(() => {
     if (!conversationId) return;
 
-    const socket = new WebSocket(
-      `${WS_URL}/api/v1/ai/chat?conversationId=${conversationId}`,
-    );
+    if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    const socket = new WebSocket(`${WS_URL}/api/v1/ai/chat?conversationId=${conversationId}`);
     ws.current = socket;
 
     socket.onmessage = (event: MessageEvent) => {
@@ -37,8 +39,8 @@ export function useSocket(conversationId: string) {
           break;
         case "chat.stream.done":
           setIsStreaming(false)
-          updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
-          updateMessage({ id: "new-ai-message", setId: parsed.aiMessageId });
+          updateMessage({ id: "new-user-message", setId: parsed.userMessageId, createdAt: parsed.userMessageCreatedAt });
+          updateMessage({ id: "new-ai-message", setId: parsed.aiMessageId, createdAt: parsed.aiMessageCreatedAt });
           break;
         case "chat.stream.error":
           toast.error(parsed.message);
@@ -47,8 +49,8 @@ export function useSocket(conversationId: string) {
         case "chat.generated.image":
           setIsStreaming(false)
           setImageKey(parsed.imageKey);
-          updateMessage({ id: "new-user-message", setId: parsed.userMessageId });
-          updateMessage({ id: "new-ai-message", setId: parsed.id });
+          updateMessage({ id: "new-user-message", setId: parsed.userMessageId, createdAt: parsed.userMessageCreatedAt });
+          updateMessage({ id: "new-ai-message", setId: parsed.id, createdAt: parsed.aiMessageCreatedAt });
           break;
         case "chat.regenerate.done":
           setIsStreaming(false);
@@ -72,8 +74,8 @@ export function useSocket(conversationId: string) {
       socket.send(JSON.stringify(message));
     } else if (socket.readyState === WebSocket.CONNECTING) {
       socket.addEventListener("open", () => {
-          socket.send(JSON.stringify(message));
-        },
+        socket.send(JSON.stringify(message));
+      },
         { once: true },
       );
     }

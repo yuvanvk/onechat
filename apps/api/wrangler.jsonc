@@ -49,6 +49,6 @@
     "crons": ["0 0 1 * *"]
   },
   "vars": {
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "production",
   }
 }

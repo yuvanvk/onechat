@@ -19,6 +19,7 @@ interface ChatStore {
     token?: string;
     id?: string;
     setId?: string;
+    createdAt?: number;
   }) => void;
   setConversationId: (conversationId: string) => void;
   setRegeneratedMessage: (messageId: string, token: string) => void;
@@ -36,7 +37,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   setPendingMessage: (message) => set({ pendingMessage: message }),
   setConversationId: (conversationId) => set({ conversationId }),
   addMessage: (message) => set({ messages: [...get().messages, message] }),
-  updateMessage: ({ token, id, setId }) =>
+  updateMessage: ({ token, id, setId, createdAt }) =>
     set({
       messages: token
         ? get().messages.map((message) =>
@@ -46,7 +47,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           )
         : id && setId
           ? get().messages.map((msg) =>
-              msg.id === id ? { ...msg, id: setId } : msg,
+              msg.id === id ? { ...msg, id: setId, createdAt} : msg,
             )
           : get().messages,
     }),

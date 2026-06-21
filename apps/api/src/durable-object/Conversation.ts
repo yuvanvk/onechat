@@ -37,15 +37,15 @@ interface StreamResult {
 
 export class Conversation extends DurableObject<Env> {
   private messages: Message[] = [];
-  private userId: string | null = null;
   private abortController = new AbortController();
-
+  private userId: string | null = null;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(MessageSchema);
       this.ctx.storage.sql.exec(ImageSchema);
       this.ctx.storage.sql.exec(PDFSchema);
+
       Db.initDB(this.env.D1_DATABASE);
       Model.warmCache();
       this.messages = this.ctx.storage.sql
@@ -55,13 +55,19 @@ export class Conversation extends DurableObject<Env> {
   }
 
   async fetch(request: Request): Promise<Response> {
-    this.userId = request.headers.get("x-user-id") as string;    
+    const userId = request.headers.get("x-user-id") as string;
     const [client, server] = Object.values(new WebSocketPair());
-    this.ctx.acceptWebSocket(server);
+    this.ctx.acceptWebSocket(server, [userId]);
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
+    const userId = this.ctx.getTags(ws)[0];
+    if (!userId) {
+      this.sendErrorMessage(ws, "Unauthorized", "");
+      return;
+    }
+    this.userId = userId
     const parsed = JSON.parse(message as string) as WebSocketClientMessage;
 
     switch (parsed.type) {
@@ -85,7 +91,7 @@ export class Conversation extends DurableObject<Env> {
     message: WebSocketCreateStreamMessage,
   ) {
     this.abortController = new AbortController();
-    
+
     const { conversationId, content, model, role, objects } = message;
     const provider = model.split("/")[0];
 
@@ -106,6 +112,7 @@ export class Conversation extends DurableObject<Env> {
       return;
 
     const userMessageId = crypto.randomUUID();
+    const userMessageCreatedAt = Date.now();
     this.messages.push({
       id: userMessageId,
       role,
@@ -114,6 +121,7 @@ export class Conversation extends DurableObject<Env> {
       messageType: "text",
       pdfs: [],
       images: [],
+      createdAt: userMessageCreatedAt
     });
 
     const hasImages =
@@ -145,6 +153,7 @@ export class Conversation extends DurableObject<Env> {
           ],
           stream: true,
           metadata: true,
+          max_tokens: 8000
         },
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
@@ -191,13 +200,15 @@ export class Conversation extends DurableObject<Env> {
       role,
       content,
       model,
-      Date.now(),
+      userMessageCreatedAt,
     );
 
+    const aiMessageCreatedAt = Date.now();
     this.messages.push({
       role: "assistant" as Role.Assistant,
       content: fullContent,
       messageType: "text",
+      createdAt: aiMessageCreatedAt
     });
     this.ctx.storage.sql.exec(
       InsertIntoMessage,
@@ -205,7 +216,7 @@ export class Conversation extends DurableObject<Env> {
       Role.Assistant,
       fullContent,
       model,
-      Date.now(),
+      aiMessageCreatedAt,
     );
 
     ws.send(
@@ -214,6 +225,8 @@ export class Conversation extends DurableObject<Env> {
         conversationId,
         userMessageId,
         aiMessageId,
+        userMessageCreatedAt,
+        aiMessageCreatedAt
       } satisfies WebSocketStreamAIDone),
     );
 
@@ -269,6 +282,7 @@ export class Conversation extends DurableObject<Env> {
             },
           ],
           stream: true,
+          max_tokens: 8000
         },
         { signal: this.abortController.signal, gateway: { id: "onechat" } },
       )) as unknown as ReadableStream;
@@ -344,11 +358,13 @@ export class Conversation extends DurableObject<Env> {
       return;
 
     const userMessageId = crypto.randomUUID();
+    const userMessageCreatedAt = Date.now()
     this.messages.push({
       id: userMessageId,
       role,
       messageType: "text",
       content,
+      createdAt: userMessageCreatedAt
     });
 
     try {
@@ -361,12 +377,14 @@ export class Conversation extends DurableObject<Env> {
       const key = await this.saveImageToR2(response.image as string);
       const aiMessageId = crypto.randomUUID();
 
+      const aiMessageCreatedAt = Date.now();
       this.messages.push({
         id: aiMessageId,
         role: Role.Assistant,
         model,
         imageKey: key,
         messageType: "image",
+        createdAt: aiMessageCreatedAt
       });
 
       await Promise.all([
@@ -376,7 +394,7 @@ export class Conversation extends DurableObject<Env> {
           Role.User,
           content,
           model,
-          Date.now(),
+          userMessageCreatedAt
         ),
         this.ctx.storage.sql.exec(
           InsertIntoMessageTypeImage,
@@ -385,7 +403,7 @@ export class Conversation extends DurableObject<Env> {
           model,
           "image",
           key,
-          Date.now(),
+          aiMessageCreatedAt
         ),
         Credit.settle(
           this.userId!,
@@ -405,6 +423,8 @@ export class Conversation extends DurableObject<Env> {
           imageKey: key,
           messageType: "image",
           userMessageId,
+          userMessageCreatedAt,
+          aiMessageCreatedAt,
         } satisfies WebSocketImageGenerated),
       );
     } catch (error) {
@@ -436,6 +456,8 @@ export class Conversation extends DurableObject<Env> {
       model,
       conversationId,
     );
+    console.log("in conver ->", reserved);
+
     if (!reserved) {
       this.sendErrorMessage(ws, "Insufficient credits", conversationId);
       return false;
@@ -545,12 +567,12 @@ export class Conversation extends DurableObject<Env> {
         this.messages = this.messages.map((m) =>
           m.id === userMessageId
             ? {
-                ...m,
-                images: [
-                  ...(m.images ?? []),
-                  { name: obj.name, size: obj.size, type: obj.type },
-                ],
-              }
+              ...m,
+              images: [
+                ...(m.images ?? []),
+                { name: obj.name, size: obj.size, type: obj.type },
+              ],
+            }
             : m,
         );
 

@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
 import dynamic from "next/dynamic";
 import { memo, useEffect, useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils"; 
-import { Label } from "@/components/ui/label"; 
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
+import { toast } from "sonner";
+import { Spinner } from "../ui/spinner";
 
 const FaultyTerminal = dynamic(() => import("@/components/ui/FaultyTerminal"), {
-  ssr: false
-})
+  ssr: false,
+});
 
 const TERMINAL_PROPS = {
   scale: 1.5,
@@ -42,25 +44,33 @@ export const Login = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   const { data } = authClient.useSession();
 
   useEffect(() => {
     if (data?.session) {
-      router.push("/")
+      router.push("/");
     }
-  }, [data?.session])
+  }, [data?.session]);
 
   async function handleLogin() {
     if (!email || !password) {
+      toast.error("Invalid Inputs.");
       return;
     }
-
-    await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: "http://localhost:3000",
-    });
+    try {
+      setLoading(true);
+      await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "http://localhost:3000",
+      });
+    } catch (error) {
+      toast.error("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -104,9 +114,7 @@ export const Login = () => {
               type="email"
               placeholder="Enter your email address"
               onChange={(e) => setEmail(e.target.value)}
-              className={cn(
-                "bg-input border-border transition-all",
-              )}
+              className={cn("bg-input border-border transition-all")}
             />
             <span className="text-[13px] text-muted-foreground pl-2">
               We'll never share your email within anyone else.
@@ -122,9 +130,7 @@ export const Login = () => {
                 placeholder="Enter your Password"
                 type={showPassword ? "text" : "password"}
                 onChange={(e) => setPassword(e.target.value)}
-                className={cn(
-                  "bg-input border-border transition-all",
-                )}
+                className={cn("bg-input border-border transition-all")}
               />
               <Button
                 size={"icon"}
@@ -142,19 +148,31 @@ export const Login = () => {
               "bg-secondary text-secondary-foreground border-border mt-2 hover:bg-secondary/90",
             )}
           >
-            <FingerprintPattern />
-            Login
+            {loading ? (
+              <Spinner />
+            ) : (
+              <>
+                <FingerprintPattern />
+                Login
+              </>
+            )}
           </Button>
 
           <div className="flex items-center gap-2 w-full">
             <hr className="grow border-t border-border" />
-            <span className="text-muted-foreground text-xs font-medium">or</span>
+            <span className="text-muted-foreground text-xs font-medium">
+              or
+            </span>
             <hr className="grow border-t border-border" />
           </div>
 
           <Button
-            className={cn("bg-secondary text-secondary-foreground border-border hover:bg-secondary/90")}
-            onClick={async () => await authClient.signIn.social({ provider: "google" })}
+            className={cn(
+              "bg-secondary text-secondary-foreground border-border hover:bg-secondary/90",
+            )}
+            onClick={async () =>
+              await authClient.signIn.social({ provider: "google" })
+            }
           >
             <FcGoogle />
             Google

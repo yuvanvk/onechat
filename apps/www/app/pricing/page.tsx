@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 import { BACKEND_URL } from "@/lib/config";
+import { authClient } from "@/lib/better-auth/auth-client";
 
 type PlanFeature = {
   label: string;
@@ -31,7 +32,7 @@ const plans: Plan[] = [
       { label: "7 messages/day limit" },
       { label: "Text-only conversations" },
     ],
-    cta: "Start Building",
+    cta: "Start to Chat",
     ctaVariant: "outline",
   },
   {
@@ -54,19 +55,17 @@ const plans: Plan[] = [
 
 export default function Pricing() {
   const router = useRouter();
-  // const session = await authClient.getSession();
-  
-  let session = {
-    data: {
-      session: {
+  const session = authClient.useSession();
 
-      }
-    }
-  }
   async function handleCheckout () {
     if(!session.data?.session) {
       toast.error("Please Sign Up or Login")
       router.push("/signup")
+      return
+    }
+    if(session.data.user.plan === "pro") {
+      toast("Already have an Active Plan.");
+      router.push("/");
       return
     }
     const response = await fetch(

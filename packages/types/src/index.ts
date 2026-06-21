@@ -55,6 +55,8 @@ export type WebSocketStreamAIDone = {
   conversationId: string;
   userMessageId?: string;
   aiMessageId?: string;
+  aiMessageCreatedAt: number;
+  userMessageCreatedAt?: number;
 };
 
 export type WebSocketTitleGeneratedMessage = {
@@ -71,6 +73,8 @@ export type WebSocketImageGenerated = {
   conversationId: string;
   imageKey: string;
   userMessageId: string;
+  aiMessageCreatedAt: number;
+  userMessageCreatedAt: number;
 }
 
 export type WebSocketErrorMessage = {
@@ -105,6 +109,7 @@ export type Message = {
   pdfs?: { name: string; type: string; size: number }[];
   images?: { name: string; type: string; size: number }[];
   imageKey?: string;
+  createdAt?: number;
 };
 
 export type Conversation = {

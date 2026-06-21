@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { ArrowRight, Eye, EyeClosed, FingerprintPattern } from "lucide-react";
+import { toast } from "sonner";
+import { Spinner } from "../ui/spinner";
 
 const FaultyTerminal = dynamic(() => import("@/components/ui/FaultyTerminal"), {
   ssr: false,
@@ -44,6 +46,7 @@ export const SignUp = () => {
   const [username, setUsername] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const { data } = authClient.useSession();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (data?.session) {
@@ -53,15 +56,23 @@ export const SignUp = () => {
   
   async function handleSignUp() {
     if (!email || !password || !username) {
+      toast.error("Invalid inputs.")
       return;
     }
-
-    await authClient.signUp.email({
-      email,
-      password,
-      name: username,
-      callbackURL: "http://localhost:3000/login",
-    });
+    setLoading(true)
+    try {
+      await authClient.signUp.email({
+        email,
+        password,
+        name: username,
+        callbackURL: "http://localhost:3000/login",
+      });
+      toast.success("Sent a verification email to your registered email.")
+    } catch (error) {
+      toast.error("Something went wrong.")
+    } finally {
+      setLoading(false)
+    }
     
   }
 
@@ -152,8 +163,10 @@ export const SignUp = () => {
               "bg-secondary text-secondary-foreground border-border mt-2 hover:bg-secondary/90",
             )}
           >
-            <FingerprintPattern />
-            SignUp
+            {loading ? <Spinner /> : <>
+              <FingerprintPattern />  
+              Sign Up
+            </>}
           </Button>
         </div>
       </div>

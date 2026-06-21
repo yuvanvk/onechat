@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
         port: url.port,
         pathname: '/**',
       },]
-  }
+  },
+  reactStrictMode: false
 };
 
 export default nextConfig;

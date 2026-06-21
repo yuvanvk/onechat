@@ -31,7 +31,7 @@ import { BACKEND_URL } from "@/lib/config";
 
 export const CommandBox = () => {
   const router = useRouter();
-  const { setConversationId } = useChatStore();
+  const { setConversationId, setMessages } = useChatStore();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { conversations } = useConversationStore();
@@ -86,6 +86,7 @@ export const CommandBox = () => {
     }
 
     setConversationId(conversationId);
+    setMessages([])
     router.push(`/c/${conversationId}`);
     setOpen(false);
   };
@@ -98,6 +99,7 @@ export const CommandBox = () => {
   const handleHome = () => {
     router.push("/");
     setOpen(false);
+    setMessages([])
   };
 
   const handleSettings = () => {

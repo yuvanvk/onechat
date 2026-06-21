@@ -57,6 +57,7 @@ LEFT JOIN pdfs p ON p.message_id = m.id
 GROUP BY m.id
 ORDER BY m.created_at ASC;
 `;
+
 export const InsertIntoMessage = `INSERT INTO messages (id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?)`;
 export const InsertIntoMessageTypeImage = `INSERT INTO messages (id, role, model, message_type, image_key, created_at) VALUES (?, ?, ?, ?, ?, ?)`
 export const UpdateConversationTitle = `UPDATE conversation SET title = ? WHERE id = ?`;

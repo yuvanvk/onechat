@@ -37,7 +37,7 @@ export default function RootLayout({
     >
       <body className="selection:bg-primary selection:text-primary-foreground font-sans">
         <Provider>{children}</Provider>
-        <Toaster position="top-right" offset={5} closeButton toastOptions={{
+        <Toaster position="top-right" offset={5} toastOptions={{
           className: "border dark:bg-[#121212]! border-neutral-800! shadow-sm! rounded-xl!"
         }}/>
       </body>

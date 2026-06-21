@@ -18,9 +18,10 @@ export const Profile = () => {
   const { data } = authClient.useSession();
 
   useEffect(() => {
-    if (!data?.session) {
+    if (!data?.user) {
       router.push("/signup");
     }
+    setEditedName(data?.user.name!);
   }, [data?.session]);
 
   async function handleSave() {
@@ -28,16 +29,13 @@ export const Profile = () => {
       toast.error("Invalid Username");
       return;
     }
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/settings/update/user`,
-      {
-        method: "PATCH",
-        credentials: "include",
-        body: JSON.stringify({
-          name: editedName,
-        }),
-      },
-    );
+    const response = await fetch(`${BACKEND_URL}/api/v1/settings/update/user`, {
+      method: "PATCH",
+      credentials: "include",
+      body: JSON.stringify({
+        name: editedName,
+      }),
+    });
     if (!response.ok) {
       toast.error("Failed to change username");
       return;
@@ -66,7 +64,7 @@ export const Profile = () => {
             <Input
               placeholder="Yuvan"
               disabled={!isEditingUsername}
-              value={data?.user.name}
+              value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
             />
             <Button
@@ -84,7 +82,15 @@ export const Profile = () => {
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <Button variant={"destructive"}>Cancel</Button>
+          <Button
+            variant={"destructive"}
+            onClick={() => {
+              setEditedName(data?.user.name ?? "");
+              setIsEditingUsername(false);
+            }}
+          >
+            Cancel
+          </Button>
           <Button onClick={handleSave}>Save</Button>
         </div>
       </div>

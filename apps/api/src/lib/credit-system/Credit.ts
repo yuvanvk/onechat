@@ -25,6 +25,7 @@ export class Credit {
     conversationId: string,
   ): Promise<boolean> {
     const db = Db.get();
+    
     const result = await db
       .update(user)
       .set({ 
@@ -37,7 +38,7 @@ export class Credit {
           gte(user.credit_balance, creditsToReserve)
         )
       )
-      .returning()
+      .returning()      
 
       if (result.length === 0) return false;
 

@@ -225,6 +225,7 @@ export const ChatInput = () => {
           role: "user" as Role,
           content,
           messageType: "text",
+          createdAt: Date.now()
           // images: attachments
           //   .filter((a) => a.type.startsWith("image/"))
           //   .map((a) => ({ name: a.name, size: a.size, type: a.type })),
@@ -233,6 +234,7 @@ export const ChatInput = () => {
           id: "new-ai-message",
           role: "assistant" as Role,
           messageType: "image",
+          createdAt: Date.now() + 1
         });
       } else {
         setPendingMessage({
@@ -251,12 +253,14 @@ export const ChatInput = () => {
           images: attachments
             .filter((a) => a.type.startsWith("image/"))
             .map((a) => ({ name: a.name, size: a.size, type: a.type })),
+          createdAt: Date.now()
         });
         addMessage({
           id: "new-ai-message",
           role: "assistant" as Role,
           content: "",
           messageType: "text",
+          createdAt: Date.now(),
         });
       }
       router.push(`/c/${activeId}`);

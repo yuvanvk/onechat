@@ -163,7 +163,7 @@ export const AppSidebar = () => {
                   )}
                 >
                   <CircleDashed />
-                  {conversation.title}
+                  {conversation.title.slice(0, 35)}...
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
