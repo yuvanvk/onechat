@@ -87,8 +87,8 @@ export const CommandBox = () => {
 
     setConversationId(conversationId);
     setMessages([])
-    router.push(`/c/${conversationId}`);
     setOpen(false);
+    router.push(`/c/${conversationId}`);
   };
 
   const handleBuyCredits = () => {
@@ -97,19 +97,19 @@ export const CommandBox = () => {
   };
 
   const handleHome = () => {
-    router.push("/");
-    setOpen(false);
     setMessages([])
+    setOpen(false);
+    router.push("/");
   };
 
   const handleSettings = () => {
-    router.push("/settings/profile");
     setOpen(false);
+    router.push("/settings/profile");
   };
 
   const handleChatSelect = (id: string) => {
-    router.push(`/c/${id}`);
     setOpen(false);
+    router.push(`/c/${id}`);
   };
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
