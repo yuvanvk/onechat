@@ -154,6 +154,7 @@ export const Login = () => {
 
           <Button
             className={cn("bg-secondary text-secondary-foreground border-border hover:bg-secondary/90")}
+            onClick={async () => await authClient.signIn.social({ provider: "google" })}
           >
             <FcGoogle />
             Google

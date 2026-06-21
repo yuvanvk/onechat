@@ -3,8 +3,6 @@
 -- created_at / updated_at are stored as epoch milliseconds (Drizzle `timestamp_ms` mode)
 -- Seed timestamp used below: 1781777829437 ms epoch
 
-BEGIN TRANSACTION;
-
 INSERT INTO "model" (id, model_id, provider, display_name, description, tier, usecase, is_active, capabilities, raw_input_rate_usd, raw_output_rate_usd, input_rate_usd, output_rate_usd, image_rate_usd, markup_multiplier, created_at, updated_at)
 VALUES
   ('openai-gpt-5-5', 'openai/gpt-5.5', 'openai', 'GPT-5.5', 'OpenAI''s most capable flagship model with advanced reasoning and multimodal understanding.', 'pro', 'text', 1, '["text", "vision", "reasoning", "coding"]', 5.0, 30.0, 9.5, 57.0, NULL, 1.9, 1781777829437, 1781777829437),
@@ -52,5 +50,3 @@ VALUES
   ('recraft-recraftv4-vector', 'recraft/recraftv4-vector', 'recraft', 'Recraft V4 Vector', 'Generate production-ready SVG vector graphics from text prompts with clean geometry, structured layers, and editable paths.', 'pro', 'image', 1, '["image-gen"]', 0, 0, 0, 0, 0.04, 1.0, 1781777829437, 1781777829437),
   ('cf-black-forest-labs-flux-1-schnell', '@cf/black-forest-labs/flux-1-schnell', 'black-forest-labs', 'Flux-1 Schnell', 'FLUX.1 [schnell] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions.', 'free', 'image', 1, '["image-gen"]', 0, 0, 0, 0, 0.01, 1.0, 1781777829437, 1781777829437),
   ('black-forest-labs-flux-2-pro-preview', 'black-forest-labs/flux-2-pro-preview', 'black-forest-labs', 'Flux-2 Pro Preview', 'FLUX.2 [pro] Preview is Black Forest Labs'' recommended default for production image generation and editing — tracks the latest [pro] weights with strong multi-reference support.', 'pro', 'image', 1, '["image-gen"]', 0, 0, 0, 0, 0.05, 1.0, 1781777829437, 1781777829437);
-
-COMMIT;

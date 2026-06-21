@@ -14,7 +14,7 @@ export async function sendEmail({
   const resend = new Resend(apiKey);
   
   await resend.emails.send({
-    from: "onboarding@resend.dev",
+    from: "OneChat <auth@mail.yuvan.me>",
     to,
     subject,
     text,
